@@ -9,8 +9,14 @@ mon = monitor_def()
 mywin = visual.Window([2400, 1200], monitor=mon, color=[1, 1, 1], fullscr=True, units='cm')
 
 # loom
-print('\n\n500')
+print('\n\n500 - linear')
 loomer(mywin, expand_time=500)
+print('\n\n500 - exponential')
+loomer(mywin, expand_time=500, mod='exponential')
+
+print('\n\n500 from yaml')
+loomer(mywin, loadyaml=True, yaml_file='C:\\Users\\Federico\\Documents\\GitHub\\VisualStimuli\\classic_loom.yml')
+
 print('\n\n2000')
 loomer(mywin, expand_time=2000)
 print('\n\n200')
