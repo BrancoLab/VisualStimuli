@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="8bbc9004-9411-42e0-961a-9c456fb11fd0" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/InstallationTest.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/define_monitor.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/exampleSess.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/stimuli.py" />
-    </list>
+    <list default="true" id="8bbc9004-9411-42e0-961a-9c456fb11fd0" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
