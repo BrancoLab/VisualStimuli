@@ -1,0 +1,8 @@
+name: "classic"
+expand_time: 500
+on_time: 1000
+start_size: 0.5
+end_size: 5
+units: 'cm'
+pos: [0, 0]
+modality: "linear"

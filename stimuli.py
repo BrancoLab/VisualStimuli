@@ -6,37 +6,28 @@ from threading import Timer as tm
 import numpy as np
 
 
-def loomer(wnd, expand_time=5000, on_time=1000,  startsize=0.1, endsize=10, units='cm', pos=[0, 0],
-           mod='linear', loadyaml=False, yaml_file=''):
+def loomer(wnd, params):
     def expander(stepper):
+        print('Expansion step at {}'.format(time.clock()))
         loom.radius = radiuses[stepper]
 
-
-    if loadyaml:
-        with open(yaml_file, 'r') as f:
-            settings = yaml.load(f)
-        units = settings['units']
-        mod = settings['modality']
-        on_time = settings['on_time']
-        expand_time = settings['expand_time']
-        endsize = settings['end_size']
-
     # Initialise the visual stimulus and screen info
-    loom = visual.Circle(wnd, radius=startsize, edges=64, units=units, lineColor='black', fillColor='black')
+    loom = visual.Circle(wnd, radius=float(params['start_size']), edges=64, units=params['units'],
+                         lineColor='black', fillColor='black')
     screenMs, _, _ = wnd.getMsPerFrame()
 
     # calculate loom expansion
     startTime = time.clock()
-    numExpSteps = np.ceil(expand_time / screenMs)
-    if mod == 'linear':
-        radiuses = np.linspace(startsize, endsize, numExpSteps)
-    elif mod == 'exponential':
-        radiuses = np.geomspace(0.1, endsize, numExpSteps)
+    numExpSteps = np.ceil(int(params['expand_time']) / screenMs)
+    if params['modality'] == 'linear':
+        radiuses = np.linspace(float(params['start_size']), float(params['end_size']), numExpSteps)
+    elif params['modality'] == 'exponential':
+        radiuses = np.geomspace(0.1,  float(params['end_size']), numExpSteps)
 
     # expand
     stepper = 0
     while True:
-        if loom.radius < endsize:
+        if loom.radius < float(params['end_size']):
             tm(screenMs, expander(stepper))
             stepper += 1
 
@@ -50,11 +41,16 @@ def loomer(wnd, expand_time=5000, on_time=1000,  startsize=0.1, endsize=10, unit
 
         loom.draw()
         wnd.flip()
-    if on_time:
+
+    if int(params['on_time']):
         on_startTime = time.clock()
-        core.wait(on_time/1000)
+        core.wait(int(params['on_time'])/1000)
         on_elapsedTime = (time.clock() - on_startTime)*1000
+        loom.radius=0.00001
+        loom.draw()
+        wnd.flip()
         print('On duration: {}'.format(on_elapsedTime))
+
 
 
 
