@@ -48,13 +48,14 @@ class App:
         # Create widgets for fileUI
         Label(fileUI, text="Select file").grid(row=0, sticky=W)
 
-        files_list = Listbox(fileUI, height=5)
-        files_list.grid(column=0, row=1, sticky=(N,W,E,S), columnspan=10, padx=10, pady=10)
-        s = Scrollbar(fileUI, orient=VERTICAL, command=files_list.yview)
+        self.files_list = Listbox(fileUI, height=5)
+        self.files_list.grid(column=0, row=1, sticky=(N,W,E,S), columnspan=10, padx=10, pady=10)
+        self.files_list.bind('<Double-Button-1>', self.params_file_selected)
+        s = Scrollbar(fileUI, orient=VERTICAL, command=self.files_list.yview)
         s.grid(column=10, row=1, sticky=(N, S))
-        files_list['yscrollcommand'] = s.set
+        self.files_list['yscrollcommand'] = s.set
 
-        loadbtn = Button(fileUI, text="Load", command=lambda:self.load_params(files_list))
+        loadbtn = Button(fileUI, text="Load", command=lambda:self.load_params(self.files_list))
         loadbtn.grid(row=3, column=0, columnspan=6)
 
         savebtn = Button(fileUI, text="Save")
@@ -67,10 +68,13 @@ class App:
 
         # Load files for fileUI
         for filename in self.get_params_files():
-            files_list.insert(END, filename)
+            self.files_list.insert(END, filename)
 
         # start the loop
         self.root.mainloop()
+
+    def params_file_selected(self, event):
+        self.load_params(self.files_list)
 
     def get_params_files(self):
         allfiles = os.listdir(self.basefld)
