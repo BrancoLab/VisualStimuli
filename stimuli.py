@@ -1,44 +1,37 @@
 from psychopy import visual, core
 import time
-import yaml
 from threading import Timer as tm
-
 import numpy as np
 
-
-def loomer(wnd, params):
+def loomer(params):
     def expander(stepper):
-        print('Expansion step at {}'.format(time.clock()))
+        if stepper == 0:
+            print('First expansion step at {}'.format(time.clock()))
         loom.radius = radiuses[stepper]
+
+
+    wnd = params['wnd']
+    radiuses = params['radiuses']
 
     # Initialise the visual stimulus and screen info
     loom = visual.Circle(wnd, radius=float(params['start_size']), edges=64, units=params['units'],
                          lineColor='black', fillColor='black')
-    screenMs, _, _ = wnd.getMsPerFrame()
 
     # calculate loom expansion
     startTime = time.clock()
-    numExpSteps = np.ceil(int(params['expand_time']) / screenMs)
-    if params['modality'] == 'linear':
-        radiuses = np.linspace(float(params['start_size']), float(params['end_size']), numExpSteps)
-    elif params['modality'] == 'exponential':
-        radiuses = np.geomspace(0.1,  float(params['end_size']), numExpSteps)
 
     # expand
     stepper = 0
     while True:
         if loom.radius < float(params['end_size']):
-            tm(screenMs, expander(stepper))
+            tm(params['screenMs'], expander(stepper))
             stepper += 1
 
         else:
             elapsedTime = (time.clock() - startTime) * 1000
-            print('reached max size')
-            print('Radius: {}'.format(loom.radius))
             print('Start time: {}\nEnd time: {}\nElapsed time: {}'.format(startTime, time.clock(),
                                                                           elapsedTime))
             break
-
         loom.draw()
         wnd.flip()
 

@@ -5,12 +5,13 @@ from stimuli import loomer
 from define_monitor import monitor_def
 from psychopy import visual
 import time
+import numpy as np
 
 # Create psychopy window
 mon = monitor_def()
-
-# create a window
+# create a window, get mseconds per refresg
 mywin = visual.Window([2400, 1200], monitor=mon, color=[1, 1, 1], fullscr=False, units='cm')
+screenMs, _, _ = mywin.getMsPerFrame()
 
 # Our GUI is going to be made into a class. If you're writing something simpler you can
 # do without the class structure.
@@ -18,6 +19,7 @@ class App:
     def __init__(self):
         self.basefld = "C:\\Users\\Federico\\Documents\\GitHub\\VisualStimuli\\stim_setups"
         self.stim_params_widgets = {}
+        self.params_topass = {'wnd':mywin, 'screenMs':screenMs}
 
         # This first line initializes our GUI.
         self.root = Tk()
@@ -88,18 +90,43 @@ class App:
 
             for idx, (k,v) in enumerate(settings.items()):
                 Label(self.stimUI, text=k).grid(row=idx, sticky=W)
-                e = Entry(self.stimUI)
+                e = Entry(self.stimUI, )
                 e.grid(row=idx, column=1)
                 e.insert(0, string=str(v))
+                e.bind('<Key-Return>', self.entruUpdated)
                 self.stim_params_widgets[k] = e
 
-    def launch_stim(self):
-        print('Launch Pressed at {}'.format(time.clock()))
-        params_topass = {}
-        for parname, wdgt in self.stim_params_widgets.items():
-            params_topass[parname] = wdgt.get()
+        self.get_stim_params()
 
-        loomer(mywin, params_topass)
+    def entruUpdated(self, event):
+        self.get_stim_params()
+
+    def get_stim_params(self, load=True):
+        print('called')
+        if not load:
+            return
+
+        print('Params loaded')
+        for parname, wdgt in self.stim_params_widgets.items():
+            self.params_topass[parname] = wdgt.get()
+        self.prep_stim()
+
+    def prep_stim(self):
+        numExpSteps = np.ceil(int(self.params_topass['expand_time']) / self.params_topass['screenMs'])
+        if self.params_topass['modality'] == 'linear':
+            radiuses = np.linspace(float(self.params_topass['start_size']),
+                                   float(self.params_topass['end_size']), numExpSteps)
+        elif self.params_topass['modality'] == 'exponential':
+            radiuses = np.geomspace(0.1, float(self.params_topass['end_size']), numExpSteps)
+
+        self.params_topass['radiuses'] = radiuses
+        print('Stimulus primed')
+
+    def launch_stim(self):
+        print('\n\n==================\n==================\n')
+        print('Launch Pressed at {}'.format(time.clock()))
+        loomer(self.params_topass)
+
 
 # Calling the class will execute our GUI.
 App()
