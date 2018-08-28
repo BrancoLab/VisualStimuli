@@ -102,7 +102,7 @@ class Main_UI(QWidget):
         # Initialise variables
         self.loaded_stims = {}
         self.current_stim_displayed = None
-        self.ignored_params = ['name', 'units', 'type', 'modality']  # Stim parameters with these will not be displayed
+        self.ignored_params = ['name', 'units', 'type', 'modality', 'Stim type']  # Stim parameters with these will not be displayed
         # in the gui, they will have to be edited in the yaml files
 
 
@@ -134,12 +134,14 @@ class Main_UI(QWidget):
         self.params_files_label = QLabel('Parameter files')
 
         self.param_files_list = QListWidget()
-        self.param_files_list.itemDoubleClicked.connect(self.nofunc)
+        self.param_files_list.itemDoubleClicked.connect(self.load_stim_params)
 
         # Loaded stims
         self.laoded_stims_label = QLabel('Loaded stims')
 
         self.loaded_stims_list = QListWidget()
+        self.loaded_stims_list.currentItemChanged.connect(self.update_params_widgets)
+        self.loaded_stims_list.itemDoubleClicked.connect(self.remove_loaded_stim)
 
         # current open stim
         self.filename_edit = QLineEdit('Params file - not loaded -')
@@ -399,8 +401,11 @@ class Main_UI(QWidget):
             elif param_name =='Delay':
                 self.stim_delay = self.get_param_val(param)
             else:
-                # TODO read params and prep them for stimulus generation
-                pass
+                if not self.current_stim_displayed is None:
+                    label = list(param.values())[0][0]
+                    value = list(param.values())[0][1]
+                    if label.text():
+                        self.loaded_stims[self.current_stim_displayed + '.yml'][label.text()] = value.text()
 
     def get_stims_param_files(self):
         files_folder = self.settings['stim_configs']
@@ -448,10 +453,15 @@ class Main_UI(QWidget):
         """ Takes the parameters form one of the loaded stims and updates the widgets to display
         the parameters """
         try:
+            if not isinstance(stim_name, str):
+                # if the function has been called by clicking on an item of the list widget "stim_name" will
+                # be a handle to the event not to the item being clicked so we need to extract the name
+                stim_name = stim_name.text()
             try:
                 params = self.loaded_stims[stim_name]
             except:
                 params = self.loaded_stims[stim_name+'.yml']
+            self.current_stim_displayed = stim_name
 
             # Update params file name entry
             self.filename_edit.setText(stim_name.split('.')[0])
@@ -521,6 +531,9 @@ class Main_UI(QWidget):
                 if items:
                     item_name = items[0]
                     self.update_params_widgets(item_name)
+                else:
+                    self.filename_edit.setText('No stim loaded')
+                    self.current_stim_displayed = None
 
 
         except:
