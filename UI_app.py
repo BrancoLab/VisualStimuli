@@ -3,6 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import traceback, sys
 import os
+import yaml
 
 from utils import *
 
@@ -100,6 +101,7 @@ class Main_UI(QWidget):
 
         # Initialise variables
         self.loaded_stims = {}
+        self.current_stim_displayed = None
         self.ignored_params = ['name', 'units', 'type', 'modality']  # Stim parameters with these will not be displayed
         # in the gui, they will have to be edited in the yaml files
 
@@ -403,8 +405,15 @@ class Main_UI(QWidget):
     def get_stims_param_files(self):
         files_folder = self.settings['stim_configs']
         self.params_files = get_files(files_folder)
+
+        items = []  # items already in the list widget
+        for index in range(self.param_files_list.count()):
+            items.append(self.param_files_list.item(index).text())
+
+        # If we loaded new files add them to the widget
         for short in sorted(self.params_files.keys()):
-            self.param_files_list.addItem(short.split('.')[0])
+            if not short.split('.')[0] in items:
+                self.param_files_list.addItem(short.split('.')[0])
 
 
     ####################################################################################################################
@@ -439,7 +448,10 @@ class Main_UI(QWidget):
         """ Takes the parameters form one of the loaded stims and updates the widgets to display
         the parameters """
         try:
-            params = self.loaded_stims[stim_name]
+            try:
+                params = self.loaded_stims[stim_name]
+            except:
+                params = self.loaded_stims[stim_name+'.yml']
 
             # Update params file name entry
             self.filename_edit.setText(stim_name.split('.')[0])
@@ -479,8 +491,10 @@ class Main_UI(QWidget):
             self.loaded_stims[file] = load_yaml(file_long)
             self.update_params_widgets(file)
             self.loaded_stims_list.addItem(file.split('.')[0])
+            self.current_stim_displayed = file.split('.')[0]
 
     def remove_loaded_stim(self):
+        # TODO --  when item removed display stuff from the sitm above it in the list
         try:
             if self.loaded_stims_list.count()>=1:
                 # Remove item from loaded stims dictionary
@@ -498,11 +512,37 @@ class Main_UI(QWidget):
                 # Remove item from list widget
                 qIndex = self.loaded_stims_list.indexFromItem(self.loaded_stims_list.selectedItems()[0])
                 self.loaded_stims_list.model().removeRow(qIndex.row())
+
+                # Display the params of the item above in the list if there is any
+                items = []  # items already in the list widget
+                for index in range(self.loaded_stims_list.count()):
+                    items.append(self.loaded_stims_list.item(index).text())
+
+                if items:
+                    item_name = items[0]
+                    self.update_params_widgets(item_name)
+
+
         except:
             pass
 
     def save_param_file(self):
-        a = 1
+        # Save file
+        if self.current_stim_displayed and self.loaded_stims:
+            params = self.loaded_stims[self.current_stim_displayed+'.yml']
+            fname = self.filename_edit.text()+'.yml'
+            path = self.settings['stim_configs']
+
+            if fname in self.loaded_stims.keys():
+                print('Trying to overwrite a parameters file !!!! <---------')
+
+            print('Saving parameters to: {}'.format(os.path.join(path, fname)))
+            with open(os.path.join(path, fname), 'w') as outfile:
+                yaml.dump(params, outfile, default_flow_style=True)
+
+        # Update files list widget
+        self.get_stims_param_files()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
