@@ -2,7 +2,7 @@ from tkinter import *
 import os
 import yaml
 from stimuli import loomer
-from utils import monitor_def
+from Utils import monitor_def
 from psychopy import visual
 import time
 import numpy as np

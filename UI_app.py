@@ -7,81 +7,14 @@ import yaml
 import time
 import numpy as np
 
-from utils import *
-from Visual_stimuli import Manager
-
-####################################################################################################################
-####################################################################################################################
-"""    WORKER CLASSES FOR MULTI THREADING   """
-####################################################################################################################
-####################################################################################################################
+from Utils import *
+from Visual_stimuli import stim_calculator
 
 
-class WorkerSignals(QObject):
-    '''
-    Defines the signals available from a running worker thread.
-
-    Supported signals are:
-
-    finished
-        No data
-
-    error
-        `tuple` (exctype, value, traceback.format_exc() )
-
-    result
-        `object` data returned from processing, anything
-
-    '''
-    finished = pyqtSignal()
-    error = pyqtSignal(tuple)
-    result = pyqtSignal(object)
-
-class Worker(QRunnable):
-    '''
-    Worker thread
-    multi threading: https://www.replrebl.com/article/multithreading-pyqt-applications-with-qthreadpool/
-
-    :param args: Arguments to make available to the run code
-    :param kwargs: Keywords arguments to make available to the run code
-
-    '''
-
-    def __init__(self, fn, *args, **kwargs):
-        """
-        Take a function and its parameters as input, then when RUN is executed call the function and pass the params
-        """
-
-        super(Worker, self).__init__()
-        self.fn = fn
-        self.args = args
-        self.kwargs = kwargs
-        self.signals = WorkerSignals()
-
-    @pyqtSlot()
-    def run(self):
-        try:
-            result = self.fn(
-                *self.args, **self.kwargs)
-        except:
-            traceback.print_exc()
-            exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exc()))
-        else:
-            self.signals.result.emit(result)  # Return the result of the processing
-        finally:
-            self.signals.finished.emit()  # Done
-
-####################################################################################################################
-####################################################################################################################
-"""    MAIN GUI CLASS   """
 ####################################################################################################################
 ####################################################################################################################
 
 class Main_UI(QWidget):
-    """
-    multi threading: https://www.replrebl.com/article/multithreading-pyqt-applications-with-qthreadpool/
-    """
     def __init__(self):
         """
         Initialise variables to control GUI behaviour
@@ -90,7 +23,7 @@ class Main_UI(QWidget):
         start MAIN loop
         """
         super().__init__()
-        # Display silent exceptions that cause the gui to crash
+        # Display silent exceptions that cause the gui to crash [Doesn't work all the time]
         sys._excepthook = sys.excepthook
         def exception_hook(exctype, value, traceback):
             print(exctype, value, traceback)
@@ -98,23 +31,33 @@ class Main_UI(QWidget):
             sys.exit(1)
         sys.excepthook = exception_hook
         # ==============================================================================
+        # ==============================================================================
         # Load parameters from config file
         config_path = 'C:\\Users\\Federico\\Documents\\GitHub\\VisualStimuli\\GUI_cfg.yml'
         self.settings = load_yaml(config_path)
 
         # Initialise variables
-        self.loaded_stims = {}
-        self.current_stim_displayed = None
+        self.prepared_stimuli = {}
+        self.current_stim_params_displayed = None
         self.ignored_params = ['name', 'units', 'type', 'modality', 'Stim type']  # Stim parameters with these will not be displayed
         # in the gui, they will have to be edited in the yaml files
-        self.stim, self.stim_frames, self.stim_cur_frame = None, False, False
+
+        # Flags to handle stim generation
+        """
+        stim on            - stim currently being played
+        stim               - reference to stimulus object
+        stim_frames        - array of frames that are used to update stim
+        stim_frame_number  - keep track of progess when looping through stim_frames
+        """
+        self.stim_on = False
+        self.stim, self.stim_frames, self.stim_frame_number = None, False, False
 
         # ==============================================================================
         # START MULTITHREDING
         self.threadpool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-        # Create GUI
+        # Create GUI UI
         self.create_widgets()
         self.define_layout()
         self.define_style_sheet()
@@ -123,6 +66,9 @@ class Main_UI(QWidget):
         # Start a thread that continously checks the parameters and refreshes the window
         main_loop_worker = Worker(self.main_loop)
         self.threadpool.start(main_loop_worker)
+
+        # Load parameters YAML files
+        self.get_stims_yaml_files_from_folder()
 
     ####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -137,14 +83,14 @@ class Main_UI(QWidget):
         self.params_files_label = QLabel('Parameter files')
 
         self.param_files_list = QListWidget()
-        self.param_files_list.itemDoubleClicked.connect(self.load_stim_params)
+        self.param_files_list.itemDoubleClicked.connect(self.load_stim_params_from_list_widget)
 
         # Loaded stims
         self.laoded_stims_label = QLabel('Loaded stims')
 
         self.loaded_stims_list = QListWidget()
         self.loaded_stims_list.currentItemChanged.connect(self.update_params_widgets)
-        self.loaded_stims_list.itemDoubleClicked.connect(self.remove_loaded_stim)
+        self.loaded_stims_list.itemDoubleClicked.connect(self.remove_loaded_stim_from_widget_list)
 
         # current open stim
         self.filename_edit = QLineEdit('Params file - not loaded -')
@@ -166,7 +112,7 @@ class Main_UI(QWidget):
         self.delay_edit = QLineEdit('0')
         self.delay_edit.setObjectName('BaseParam')
 
-        # Append bg and delay stiff to parameters dictionary
+        # Append bg and delay stuff to parameters dictionary
         param = {self.bg_label.text(): [self.bg_label, self.bg_edit]}
         self.params_widgets_dict[self.bg_label.text()] = param
         param = {self.delay_label.text(): [self.delay_label, self.delay_edit]}
@@ -178,13 +124,13 @@ class Main_UI(QWidget):
 
         # Load and save btn
         self.load_btn = QPushButton(text='Load')
-        self.load_btn.clicked.connect(self.load_stim_params)
+        self.load_btn.clicked.connect(self.load_stim_params_from_list_widget)
 
         self.remove_btn = QPushButton(text='Remove')
-        self.remove_btn.clicked.connect(self.remove_loaded_stim)
+        self.remove_btn.clicked.connect(self.remove_loaded_stim_from_widget_list)
 
         self.save_btn = QPushButton(text='Save')
-        self.save_btn.clicked.connect(self.save_param_file)
+        self.save_btn.clicked.connect(self.save_params_yaml_file)
 
         # Benchmark btn
         self.bench_btn = QPushButton(text='Bench Mark')
@@ -261,6 +207,7 @@ class Main_UI(QWidget):
         p.setColor(self.backgroundRole(), QColor(40, 40, 40, 255))
         self.setPalette(p)
 
+        # Widgets style sheet
         self.setStyleSheet("""
                     QPushButton {
                         color: #ffffff;
@@ -345,28 +292,34 @@ class Main_UI(QWidget):
                                    """)
 
     ####################################################################################################################
-    """    INITIALISE PSYCHOPY  """
+    """  PSYCHOPY functions  """
     ####################################################################################################################
 
     def start_psychopy(self):
         t = time.clock()
         from psychopy import visual, core  # This needs to be here, it can't be outside the threat the window is created from
-        print('import take {}'.format(time.clock()-t))
+        print('First psychopy import took: {}'.format((time.clock()-t)*1000))
 
+        # Create monitor object
         mon = monitor_def(self.settings)
-        # create a window, get mseconds per refresh
-        size = self.settings['wnd_PxSize']
+
+        # Get params to create a window from settings
+        size = self.settings['wnd_PxSize']  # Get size from the settings (specified in GUI_cfg.yml
         try:
             size = (size.split(', ')[0], size.split(', ')[1])
         except:
             size = (size.split(',')[0], size.split(',')[1])
-        col = map_color_scale(int(self.settings['default_bg']))
+
+        col = map_color_scale(int(self.settings['default_bg']))  # Get default background color and update bg widget
         self.params_widgets_dict['Background Luminosity']['Background Luminosity'][1].setText(
             str(int(map_color_scale(col, reversed=True))))  # Update the BG color widget
 
+        # Create a window, get mseconds per screen refresh
         self.psypy_window = visual.Window([int(size[0]), int(size[1])], monitor=mon, color=[col, col, col],
                                           fullscr=self.settings['fullscreen'], units=self.settings['unit'])
         self.screenMs, _, _ = self.psypy_window.getMsPerFrame()
+
+        # Print the results to the consol
         print('\n========================================')
         print('''
         Initialised Psychopy window: {}
@@ -377,191 +330,199 @@ class Main_UI(QWidget):
         '''.format(self.psypy_window.name, self.psypy_window.size, self.psypy_window.fps(), mon.name, self.screenMs))
         print('\n========================================')
 
-    def stim_manager(self):
-        if not isinstance(self.stim_frames, bool):
-
-            from psychopy import visual, \
-                core  # This needs to be here, it can't be outside the threat the window is created from
-
-            if not self.stim_cur_frame:
-                self.stim_timer = time.clock()
-                self.stim_cur_frame = 0
-
-            params = self.loaded_stims[self.current_stim_displayed + '.yml']
-            self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
-                                 units=params['units'],
-                                 lineColor='white', fillColor='black')
-            self.stim.radius = self.stim_frames[self.stim_cur_frame]
-            self.stim.draw()
-
-            self.stim_cur_frame += 1
-
-            if self.stim_cur_frame == len(self.stim_frames):
-                elapsed = time.clock() - self.stim_timer
-                print('Stim duration: {}'.format(elapsed * 1000))
-                s = time.clock()
-                time.sleep(int(int(params['on_time'])/1000))
-                print('ON time {}'.format(time.clock()-s))
-
-                self.stim.radius = 0.001
-                self.stim.setFillColor([0, 0, 0])
-                self.stim.draw()
-
-                self.stim_frames = False
-                self.stim_cur_frame = False
-
-    ####################################################################################################################
-    """    FUNCTIONS  """
-    ####################################################################################################################
-    def change_bg_lum(self, lum):
+    def change_bg_lum(self):
         # Get bg luminosity and update widow
+        lum = self.bg_luminosity
         if not lum:
             lum = 0
         elif int(lum) > 255:
             lum = 255
         else:
             lum = int(lum)
-
+        # update the window color
         lum = map_color_scale(lum)
         self.psypy_window.setColor([lum, lum, lum])
 
-    def get_param_val(self, param):
-        val = list(param.values())[0][1].text()
-        if not val:
-            val = 0
-        return int(val)
+    def stim_creator(self):
+        """
+        Creates and initialises stimuli
+        """
+        # TODO non linear looms and gratings
+        params = self.prepared_stimuli[self.current_stim_params_displayed]
 
-    def update_params(self):  # <--- !!!
+        if 'loom' in params['Stim type'].lower():
+            self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
+                                      units=params['units'],
+                                      lineColor='white', fillColor='black')
+            self.stim.radius = self.stim_frames[self.stim_frame_number]
+            self.stim.draw()
+
+        # Print how long it took to create the stim
+        print('Stim generation took: {}'.format((time.clock()-self.stim_creation_timer)*1000))
+
+    def stim_destroyer(self):
+        """
+        Cleans up the psychopy window after the stimulus ended and it re-initialises the variabels
+        """
+        params = self.prepared_stimuli[self.current_stim_params_displayed]
+
+        # Clean up stimuli
+        if 'loom' in params['Stim type'].lower():
+            # Cant find a better way to remove looms than making them super tiny
+            self.stim.radius = 0.001
+            self.stim.draw()
+
+        # Clean up variables
+        self.stim_frames = False
+        self.stim_frame_number = False
+        self.stim_on = False
+
+    def stim_manager(self):
+        """
+        When the launch button gets called:
+        * The stimulus frames get calculated (e.g. for looms the number of frames it will take to expand and the radii at all steps)
+        * This function creates the stimulus object
+        * Everytime stim_manager is called it loops over the stimulus frames and updates it
+        * When all frames have been played, the window is cleaned
+
+        :return:
+        """
+        if self.stim_on:
+            # Need to import from psychopy here or it gives an error. Takes <<1 ms
+            from psychopy import visual
+
+            # If stim is just being created, start clock to time its duration
+            if not self.stim_frame_number:
+                self.stim_timer = time.clock()
+                self.stim_creation_timer = time.clock()
+                # Initialise variable to keep track of progress during stim update
+                self.stim_frame_number = 0
+
+            # Create the stimulus object
+            self.stim_creator()
+
+            # Keep track of our progress as we update the loom
+            self.stim_frame_number += 1
+
+            if self.stim_frame_number == len(self.stim_frames):
+                # We reached the end of the stim frames, keep the stim on for a number of ms and then clean up
+                # Print for how long the stimulus has been on
+                elapsed = time.clock() - self.stim_timer
+                print('Stim duration: {}'.format(elapsed * 1000))
+
+                # Get for how long the stimulus should be left on, and time it
+                params = self.prepared_stimuli[self.current_stim_params_displayed]
+                ontimer = time.clock()
+                time.sleep(int(int(params['on_time'])/1000))
+                print('ON time {}'.format((time.clock()-ontimer))*1000)
+
+                # After everything is done, clean up
+                self.stim_frames = False
+                self.stim_frame_number = False
+                self.stim_on = False
+
+
+
+    ####################################################################################################################
+    """  FUNCTIONS  """
+    ####################################################################################################################
+    # PARAMS handling
+    def read_from_params_widgets(self):  # <--- !!!
+        """
+        Loops over the params widgets and reads their values.
+        Stores the values in the dictionary of the currently displayed stimulus
+        :return:
+        """
         for param_name, param in self.params_widgets_dict.items():
             if param_name == 'Background Luminosity':
-                self.change_bg_lum(list(param.values())[0][1].text())
+                self.bg_luminosity = get_param_val(param, string=True)
+
             elif param_name =='Delay':
-                self.stim_delay = self.get_param_val(param)
+                self.stim_delay = get_param_val(param)
+
             else:
-                if not self.current_stim_displayed is None:
-                    label = list(param.values())[0][0]
-                    value = list(param.values())[0][1]
+                if not self.current_stim_params_displayed is None:
+                    label = get_param_label(param)
+                    value = get_param_val(param, string=True)
                     if label.text():
-                        self.loaded_stims[self.current_stim_displayed + '.yml'][label.text()] = value.text()
-
-    def get_stims_param_files(self):
-        files_folder = self.settings['stim_configs']
-        self.params_files = get_files(files_folder)
-
-        items = []  # items already in the list widget
-        for index in range(self.param_files_list.count()):
-            items.append(self.param_files_list.item(index).text())
-
-        # If we loaded new files add them to the widget
-        for short in sorted(self.params_files.keys()):
-            if not short.split('.')[0] in items:
-                self.param_files_list.addItem(short.split('.')[0])
-
-
-    ####################################################################################################################
-    """    MAIN LOOP  """
-    ####################################################################################################################
-
-    def main_loop(self):
-        # Start psychopy window
-        self.start_psychopy()
-
-        # Get parameters files
-        self.get_stims_param_files()
-
-        while True:
-            # Update parameters
-            self.update_params()
-
-            # Update and generate the stimulus
-            self.stim_manager()
-
-            if isinstance(self.stim_frames, bool):
-                try:
-                    self.stim.radius=0
-                except:
-                    pass
-
-            # Update the window
-            try:
-                self.psypy_window.flip()
-            except:
-                print('Didnt flip')
-
-    ####################################################################################################################
-    """    BUTTONS FUNCTIONS  """
-    ####################################################################################################################
-
-    def nofunc(self):
-        pass
+                        self.prepared_stimuli[self.current_stim_params_displayed][label.text()] = value
 
     def update_params_widgets(self, stim_name):
-        """ Takes the parameters form one of the loaded stims and updates the widgets to display
-        the parameters """
+        """ Takes the parameters form one of the loaded stims [in the list widget] and updates the widgets to display
+        the parameters values"""
         try:
             if not isinstance(stim_name, str):
                 # if the function has been called by clicking on an item of the list widget "stim_name" will
                 # be a handle to the event not to the item being clicked so we need to extract the name
                 stim_name = stim_name.text()
-            try:
-                params = self.loaded_stims[stim_name]
-            except:
-                params = self.loaded_stims[stim_name+'.yml']
-            self.current_stim_displayed = stim_name
+
+            # Get the parameters for the selected stim
+            params = self.prepared_stimuli[stim_name]
+
+            # Keep track of which is the stimulus we are currently displaying
+            self.current_stim_params_displayed = stim_name
 
             # Update params file name entry
-            self.filename_edit.setText(stim_name.split('.')[0])
+            self.filename_edit.setText(stim_name)
 
-            # Update stim type parameter
+            # Update stim type parameter widgets
             list(self.params_widgets_dict['Stim Type'].values())[0][0].setText('Stim type')
             list(self.params_widgets_dict['Stim Type'].values())[0][1].setText(params['type'])
 
-            # Update the other parameters
+            # Update the other parameters widgets
             params_names = sorted(params.keys())
-            params_names = [x for x in params_names if x not in self.ignored_params]
-            assigned = 0
+            params_names = [x for x in params_names if x not in self.ignored_params]  # Don't display all parameters
+            assigned = 0  # Keep track of how many parameters have been assigned to a widget
             for pnum in sorted(self.params_widgets_dict.keys()):
                 if 'Param' in pnum:
-                    label = list(self.params_widgets_dict[pnum].values())[0][0]
-                    value = list(self.params_widgets_dict[pnum].values())[0][1]
+                    label = get_param_label(self.params_widgets_dict[pnum])
+                    value = get_param_val(self.params_widgets_dict[pnum])
+
                     if assigned >= len(params_names):
+                        # Additional widgets should be empty
                         label.setText('')
                         value.setText(str(''))
                     else:
+                        # Set the widgets texts
                         par = params_names[assigned]
                         label.setText(par)
                         value.setText(str(params[par]))
                     assigned += 1
-            if assigned < len(params_names):
+
+            if assigned < len(params_names):  # Too many params to display for the number of widgets in the GUI
                 print(' Couldnt display all params, need more widgets')
         except:
-            raise Warning('Couldnt load parameters from file {}'.format(stim_name+'.yml'))
+            # TODO: this seems to result in the application crashing if something went wrong
+            raise Warning('Couldnt load parameters from file {}'.format(stim_name + '.yml'))
 
-    def load_stim_params(self):
+    def load_stim_params_from_list_widget(self):
+        """
+        Get the selected file in the widget list of .yaml files and loads the data from it, then calls other
+        functions to update class data and GUI widgets
+        """
         if self.param_files_list.currentItem().text():
             # Get correct path to file
-            file = self.param_files_list.currentItem().text()+'.yml'
+            file = self.param_files_list.currentItem().text()
             file_long = os.path.join(self.settings['stim_configs'], file)
 
-            # Load file parametrs, store them in dictionary and update widgets
-            self.loaded_stims[file] = load_yaml(file_long)
-            self.update_params_widgets(file)
-            self.loaded_stims_list.addItem(file.split('.')[0])
-            self.current_stim_displayed = file.split('.')[0]
+            self.prepared_stimuli[file] = load_yaml(file_long)  # Load parameters from YAML files
+            self.update_params_widgets(file)  # Update the widgets with new paramaters
+            self.loaded_stims_list.addItem(file)  # Add the file to the widget list
+            self.current_stim_params_displayed = file  # Set the currently displayed stim accordingly
 
-    def remove_loaded_stim(self):
-        # TODO --  when item removed display stuff from the sitm above it in the list
+    def remove_loaded_stim_from_widget_list(self):
+        # TODO --  this seems to be buggy
         try:
-            if self.loaded_stims_list.count()>=1:
+            if self.loaded_stims_list.count() >= 1:
                 # Remove item from loaded stims dictionary
                 sel = self.loaded_stims_list.currentItem().text()
-                del self.loaded_stims[sel+'.yml']
+                del self.prepared_stimuli[sel]
 
                 # Clean up widgets
                 for param, wdgets in self.params_widgets_dict.items():
                     if param not in ['Background Luminosity', 'Delay']:
-                        label = list(wdgets.values())[0][0]
-                        value = list(wdgets.values())[0][1]
+                        label = get_param_label(wdgets)
+                        value = get_param_val(wdgets)
                         label.setText('')
                         value.setText('')
 
@@ -570,44 +531,108 @@ class Main_UI(QWidget):
                 self.loaded_stims_list.model().removeRow(qIndex.row())
 
                 # Display the params of the item above in the list if there is any
-                items = []  # items already in the list widget
-                for index in range(self.loaded_stims_list.count()):
-                    items.append(self.loaded_stims_list.item(index).text())
-
+                items = get_list_widget_items(self.loaded_stims_list.count())  # items already in the list widget
                 if items:
-                    item_name = items[0]
-                    self.update_params_widgets(item_name)
+                    # Load from the first item in the list
+                    self.update_params_widgets(items[0])
                 else:
+                    # I think that this is where the bug is
                     self.filename_edit.setText('No stim loaded')
-                    self.current_stim_displayed = None
-
-
+                    self.current_stim_params_displayed = None
         except:
-            pass
+            raise Warning('Something went wrong...')
 
-    def save_param_file(self):
+    # FILES handling
+    def get_stims_yaml_files_from_folder(self):
+        # Get all YAML files in the folder
+        files_folder = self.settings['stim_configs']
+        params_files = get_files(files_folder)
+
+        # Get list of files already in list widget
+        files_in_list = get_list_widget_items(self.param_files)
+
+        # If we loaded new files add them to the widget
+        for short in sorted(params_files.keys()):
+            if not short.split in files_in_list:
+                self.param_files_list.addItem(short)
+
+    def save_params_yaml_file(self):
         # Save file
-        if self.current_stim_displayed and self.loaded_stims:
-            params = self.loaded_stims[self.current_stim_displayed+'.yml']
-            fname = self.filename_edit.text()+'.yml'
+        if self.current_stim_params_displayed and self.prepared_stimuli:
+            params = self.prepared_stimuli[self.current_stim_params_displayed]
+            fname = self.filename_edit.text()
             path = self.settings['stim_configs']
 
-            if fname in self.loaded_stims.keys():
+            if fname in self.prepared_stimuli.keys():
                 print('Trying to overwrite a parameters file !!!! <---------')
+                # TODO handle this better ?
 
             print('Saving parameters to: {}'.format(os.path.join(path, fname)))
             with open(os.path.join(path, fname), 'w') as outfile:
                 yaml.dump(params, outfile, default_flow_style=True)
 
         # Update files list widget
-        self.get_stims_param_files()
+        self.get_stims_yaml_files_from_folder()
 
+    # LAUNCH btn function
     def launch_stim(self):
-        if self.current_stim_displayed:
-            params = self.loaded_stims[self.current_stim_displayed+'.yml']
-            self.stim_frames = Manager(self.psypy_window, self.screenMs, params)
-            self.stim_frames = self.stim_frames.stim_frames
+        if self.current_stim_params_displayed:
+            self.stim_on = True
+            # get params and call stim generator to calculate stim frames
+            params = self.prepared_stimuli[self.current_stim_params_displayed]
+            self.stim_frames = stim_calculator(self.screenMs, params)
 
+
+    ####################################################################################################################
+    """    MAIN LOOP  """
+    ####################################################################################################################
+
+    def main_loop(self):
+        """
+        The main loop runs in a separate thread from the GUI
+
+        After initialisng the psychopy window it keeps looping in sync with the screen refresh rate (check out
+        window.flip() docs in psychopy)
+
+        At each loop the parameters of the currently loaded stim are checked, then the background is changed
+        accordingly and finally the stimuli are managed
+        """
+        # Start psychopy window
+        self.start_psychopy()
+
+        while True:  # Keep loopingnin synch with the screen refresh rate, check the params and update stuff
+            # Update parameters
+            self.read_from_params_widgets()
+
+            # Update background
+            self.change_bg_lum()
+
+            # Generate, update and clean up stimuli
+            self.stim_manager()
+
+            if isinstance(self.stim_frames, bool):
+                try:
+                    self.stim.radius=0
+                except:
+                    pass
+
+            # Update psychopy window
+            try:
+                self.psypy_window.flip()
+            except:
+                print('Didnt flip')
+
+    ####################################################################################################################
+    ####################################################################################################################
+
+    def nofunc(self):
+        # Decoy function to set up empty buttons during GUI design
+        pass
+
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
+####################################################################################################################
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

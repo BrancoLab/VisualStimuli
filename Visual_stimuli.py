@@ -1,26 +1,27 @@
 import numpy as np
 
-class Manager:
-    def __init__(self, wnd, screenMs, params):
-        self.wnd = wnd
-        self.params = params
-        self.screenMs = screenMs
-        if 'loom' in params['Stim type'].lower():
-            self.loomer()
 
-    def loomer(self, run_stim=True):
-        # Prepare raddi steps
-        numExpSteps = np.ceil(int(self.params['expand_time']) / self.screenMs) + 1
-        if self.params['modality'] == 'linear':
-            radii = np.linspace(float(self.params['start_size']),
-                                float(self.params['end_size']), numExpSteps)
-        elif self.params['modality'] == 'exponential':
-            radii = np.geomspace(0.1, float(self.params['end_size']), numExpSteps)
-        else:
-            radii = []
-            raise Warning('Couldnt compute loom parameters')
+def loomer(params, screenMs):
+    # Prepare raddi steps
+    numExpSteps = np.ceil(int(params['expand_time']) / screenMs) + 1
+    if params['modality'] == 'linear':
+        radii = np.linspace(float(params['start_size']),
+                            float(params['end_size']), numExpSteps)
+    elif params['modality'] == 'exponential':
+        radii = np.geomspace(0.1, float(params['end_size']), numExpSteps)
+    else:
+        radii = []
+        raise Warning('Couldnt compute loom parameters')
 
-        self.stim_frames = radii
+    return radii
+
+
+def stim_calculator(screenMs, params):
+    # Call subfunctions to generate the stimulus
+    if 'loom' in params['Stim type'].lower():
+        stim_frames = loomer(screenMs, params)
+
+
 
 
 
