@@ -1,0 +1,16 @@
+# DEFINE THE MONITOR
+Name: 'Dell P2715Q'  # Name of the monitor
+PxSize: 3840, 2160 # Size of the monitor in pixel
+Width: 60            # Width of the monitor in cm
+Distance: 40         # Distance from the mouse
+
+# DEFINE PSYCHOPY WINDOW
+wnd_PxSize: 2400, 1200 # Size of the window in px
+fullscreen: false      # Full-screen mode
+unit: 'cm'             # Default unit of measurement for stims
+default_bg: 255        # Default background color
+
+# DEFINE PATHS
+stim_configs: 'C:\Users\Federico\Documents\GitHub\VisualStimuli\stim_setups'
+
+
