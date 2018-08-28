@@ -2,10 +2,11 @@ from tkinter import *
 import os
 import yaml
 from stimuli import loomer
-from define_monitor import monitor_def
+from utils import monitor_def
 from psychopy import visual
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Create psychopy window
 mon = monitor_def()
@@ -97,39 +98,76 @@ class App:
                 e = Entry(self.stimUI, )
                 e.grid(row=idx, column=1)
                 e.insert(0, string=str(v))
-                e.bind('<Key-Return>', self.entruUpdated)
+                e.bind('<Key-Return>', self.entryUpdated)
                 self.stim_params_widgets[k] = e
-
         self.get_stim_params()
 
-    def entruUpdated(self, event):
+    def entryUpdated(self, event):
         self.get_stim_params()
 
     def get_stim_params(self, load=True):
-        print('called')
         if not load:
             return
-
-        print('Params loaded')
         for parname, wdgt in self.stim_params_widgets.items():
             self.params_topass[parname] = wdgt.get()
-        self.prep_stim()
 
     def prep_stim(self):
-        numExpSteps = np.ceil(int(self.params_topass['expand_time']) / self.params_topass['screenMs'])
+        numExpSteps = np.ceil(int(self.params_topass['expand_time']) / self.params_topass['screenMs'])+1
         if self.params_topass['modality'] == 'linear':
-            radiuses = np.linspace(float(self.params_topass['start_size']),
+            radii = np.linspace(float(self.params_topass['start_size']),
                                    float(self.params_topass['end_size']), numExpSteps)
         elif self.params_topass['modality'] == 'exponential':
-            radiuses = np.geomspace(0.1, float(self.params_topass['end_size']), numExpSteps)
+            radii = np.geomspace(0.1, float(self.params_topass['end_size']), numExpSteps)
 
-        self.params_topass['radiuses'] = radiuses
-        print('Stimulus primed')
+        self.params_topass['radii'] = radii
 
     def launch_stim(self):
         print('\n\n==================\n==================\n')
         print('Launch Pressed at {}'.format(time.clock()))
-        loomer(self.params_topass)
+
+        stim_preps, durations, frames = [], [], []
+
+        # self.get_stim_params()
+        # self.prep_stim()
+        # loomer(self.params_topass, run_stim=False)
+
+        iteration = 0
+        while True:
+
+            print('\n\n Iter {}'.format(iteration))
+            # Prep stim
+            start_prep = time.clock()
+            self.get_stim_params()
+            self.prep_stim()
+            prep = time.clock()-start_prep
+            stim_preps.append(prep)
+            print('Stim prep: ', prep)
+
+            dur, fr = loomer(self.params_topass)
+            durations.append(dur)
+            frames.append(fr)
+            iteration += 1
+
+            mywin.flip()
+            time.sleep(np.random.randint(0, 30)/100)
+
+            if iteration == 100:
+                break
+
+        plt.figure()
+        plt.hist(durations)
+
+        f, axarr = plt.subplots(3,1)
+        axarr[0].plot(durations)
+        axarr[0].set(title='mean duration: {}, sdev: {}'.format(round(np.mean(durations), 2),
+                                                                round(np.std(durations), 2)))
+        axarr[0].axhline(500)
+
+        axarr[1].plot(stim_preps)
+        axarr[1].set(title='mean duration: {}, sdev: {}'.format(round(np.mean(start_prep), 2),
+                                                                round(np.std(start_prep), 2)))
+        axarr[2].plot(frames)
+        plt.show()
 
 
 # Calling the class will execute our GUI.
