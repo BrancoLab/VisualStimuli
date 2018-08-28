@@ -1,3 +1,4 @@
+type: 'loom'
 name: "classic"
 expand_time: 500
 on_time: 1000
