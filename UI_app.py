@@ -4,8 +4,11 @@ from PyQt5.QtGui import *
 import traceback, sys
 import os
 import yaml
+import time
+import numpy as np
 
 from utils import *
+from Visual_stimuli import Manager
 
 ####################################################################################################################
 ####################################################################################################################
@@ -104,7 +107,7 @@ class Main_UI(QWidget):
         self.current_stim_displayed = None
         self.ignored_params = ['name', 'units', 'type', 'modality', 'Stim type']  # Stim parameters with these will not be displayed
         # in the gui, they will have to be edited in the yaml files
-
+        self.stim, self.stim_frames, self.stim_cur_frame = None, False, False
 
         # ==============================================================================
         # START MULTITHREDING
@@ -169,10 +172,9 @@ class Main_UI(QWidget):
         param = {self.delay_label.text(): [self.delay_label, self.delay_edit]}
         self.params_widgets_dict[self.delay_label.text()] = param
 
-
         # Launch btn
         self.launch_btn = QPushButton(text='Launch')
-        self.launch_btn.clicked.connect(self.nofunc)
+        self.launch_btn.clicked.connect(self.launch_stim)
 
         # Load and save btn
         self.load_btn = QPushButton(text='Load')
@@ -242,7 +244,7 @@ class Main_UI(QWidget):
         # Finalise layout
         self.setLayout(self.grid)
         self.setContentsMargins(50, 10, 10, 25)
-        self.setGeometry(100, 100, 2500, 1800)
+        self.setGeometry(100, 100, 1000, 1800)
         self.setWindowTitle('Review')
 
         # Benchamrk btn
@@ -347,7 +349,9 @@ class Main_UI(QWidget):
     ####################################################################################################################
 
     def start_psychopy(self):
-        from psychopy import visual  # This needs to be here, it can't be outside the threat the window is created from
+        t = time.clock()
+        from psychopy import visual, core  # This needs to be here, it can't be outside the threat the window is created from
+        print('import take {}'.format(time.clock()-t))
 
         mon = monitor_def(self.settings)
         # create a window, get mseconds per refresh
@@ -372,6 +376,39 @@ class Main_UI(QWidget):
         mS per frame: {}\n
         '''.format(self.psypy_window.name, self.psypy_window.size, self.psypy_window.fps(), mon.name, self.screenMs))
         print('\n========================================')
+
+    def stim_manager(self):
+        if not isinstance(self.stim_frames, bool):
+
+            from psychopy import visual, \
+                core  # This needs to be here, it can't be outside the threat the window is created from
+
+            if not self.stim_cur_frame:
+                self.stim_timer = time.clock()
+                self.stim_cur_frame = 0
+
+            params = self.loaded_stims[self.current_stim_displayed + '.yml']
+            self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
+                                 units=params['units'],
+                                 lineColor='white', fillColor='black')
+            self.stim.radius = self.stim_frames[self.stim_cur_frame]
+            self.stim.draw()
+
+            self.stim_cur_frame += 1
+
+            if self.stim_cur_frame == len(self.stim_frames):
+                elapsed = time.clock() - self.stim_timer
+                print('Stim duration: {}'.format(elapsed * 1000))
+                s = time.clock()
+                time.sleep(int(int(params['on_time'])/1000))
+                print('ON time {}'.format(time.clock()-s))
+
+                self.stim.radius = 0.001
+                self.stim.setFillColor([0, 0, 0])
+                self.stim.draw()
+
+                self.stim_frames = False
+                self.stim_cur_frame = False
 
     ####################################################################################################################
     """    FUNCTIONS  """
@@ -435,6 +472,15 @@ class Main_UI(QWidget):
         while True:
             # Update parameters
             self.update_params()
+
+            # Update and generate the stimulus
+            self.stim_manager()
+
+            if isinstance(self.stim_frames, bool):
+                try:
+                    self.stim.radius=0
+                except:
+                    pass
 
             # Update the window
             try:
@@ -555,6 +601,12 @@ class Main_UI(QWidget):
 
         # Update files list widget
         self.get_stims_param_files()
+
+    def launch_stim(self):
+        if self.current_stim_displayed:
+            params = self.loaded_stims[self.current_stim_displayed+'.yml']
+            self.stim_frames = Manager(self.psypy_window, self.screenMs, params)
+            self.stim_frames = self.stim_frames.stim_frames
 
 
 if __name__ == '__main__':
