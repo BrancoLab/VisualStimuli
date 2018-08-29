@@ -226,6 +226,9 @@ def unit_converter(wnd, data, in_unit='cm', out_unit='px'):
     if in_unit == 'cm':
         if out_unit == 'px':
             out = tools.monitorunittools._cm2pix(data, 0, wnd)
+        if out_unit == 'deg' or out_unit == 'degs':
+            conv_fact = tools.monitorunittools._deg2pix(1, 0, wnd)*cm_per_px
+            out = data*(1/conv_fact)
     if in_unit == 'deg' or in_unit == 'degs':
         if out_unit == 'px':
             out = tools.monitorunittools._deg2pix(data, 0, wnd)

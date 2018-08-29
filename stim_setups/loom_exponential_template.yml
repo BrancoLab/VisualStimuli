@@ -1,0 +1,10 @@
+type: loom               # type of stimulus
+modality: exponential    # loom expansion mode
+
+start_size: 10     # start size
+LV speed: 490       # LV speed determines how fast the loom expands
+max radius: 20      # The loom will stop expanding at this radius
+on_time: 1000       # for how long the stim stays on after it finished expanding
+pos: 0, 0           # position on the screen, in arbitrary unit
+
+units: deg          # stimulus unit

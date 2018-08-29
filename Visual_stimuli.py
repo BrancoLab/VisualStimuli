@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 from Utils import *
 
 
@@ -17,17 +17,46 @@ def loomer(wnd, params, screenMs):
     # unit that is being used for the loom
     pos = int(params['pos'].split(', ')[0]), int(params['pos'].split(', ')[1])
     unit = params['units']
-    pos = unit_converter(wnd, pos[0], in_unit='px', out_unit=unit), unit_converter(wnd, pos[1], in_unit='px', out_unit=unit)
+    pos = unit_converter(wnd, pos[0], in_unit='px', out_unit=unit), unit_converter(wnd, pos[1],
+                                                                                   in_unit='px', out_unit=unit)
 
-    # Prepare raddi steps
-    numExpSteps = np.ceil(int(params['expand_time']) / screenMs) + 1
+    # Prepare radii steps
     if params['modality'] == 'linear':
+        numExpSteps = np.ceil(int(params['expand_time']) / screenMs) + 1
+
         radii = np.linspace(float(params['start_size']),
                             float(params['end_size']), numExpSteps)
     elif params['modality'] == 'exponential':
-        radii = np.geomspace(0.1, float(params['end_size']), numExpSteps)
+        # Get the parameters to calculate the loom expansion steps
+        speed = int(params['LV speed'])/1000
+        if params['units'] == 'degs' or params['units'] == 'deg':
+            tangent = math.tan(math.radians(float(params['start_size'])/2))
+        elif params['units'] == 'cm':
+            size = unit_converter(wnd, float(params['start_size']), in_unit='cm', out_unit='deg')
+            tangent = math.degrees(math.tan(float(size)))
+        mouse_distance = wnd.monitor.getDistance()  # distance of mouse from screen in cm
+
+        # Calc expansions steps  [based on Matlab code for exponential looms]
+        time_to_collision = round(float(100*speed/tangent),2)/100 # time to collision IN SECONDS
+        num_steps = np.ceil(time_to_collision/(1/60))
+        time_array = np.linspace(-time_to_collision, 0, num_steps)
+
+        conv_factor = speed/abs(time_array[0:-1])
+        radii = conv_factor * mouse_distance  # Radii in cm
+
+        # Convert the radii in degres if the stim is being defined in degrees
+        if params['units']  == 'deg' or params['units'] == 'degs':
+            converted_radii = []
+            for rad in radii:
+                converted_radii.append(unit_converter(wnd, rad, in_unit='cm', out_unit='deg'))
+            radii = np.array(converted_radii)
+
+        # Cut of radii that exceed user selected value
+        radii[np.where(radii>int(params['max radius']))] = int(params['max radius'])
+
     else:
         raise Warning('Couldnt compute loom parameters')
+
     return pos, radii
 
 
@@ -105,3 +134,8 @@ def stim_calculator(wnd, params, screenMs):
         stim_frames = grater(wnd, params, screenMs)
 
     return stim_frames
+
+
+
+
+
