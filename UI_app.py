@@ -377,8 +377,29 @@ class Main_UI(QWidget):
         # Need to import from psychopy here or it gives an error. Takes <<1 ms
         from psychopy import visual
 
-        # TODO non linear looms and gratings
+        # Create the visual stimuli
+        if self.stim_on:
+            params = self.prepared_stimuli[self.current_stim_params_displayed]
 
+            # Create a LOOM
+            if 'loom' in params['type'].lower():
+                pos = self.stim_frames[0]
+                radii = self.stim_frames[1]
+
+                self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
+                                          units=params['units'], pos=pos,
+                                          lineColor='black', fillColor='black')
+                self.stim.radius = radii[self.stim_frame_number]
+
+            # Create a GRATING
+            if 'grating' in params['Stim type'].lower():
+                pos = self.stim_frames[0]
+                size = self.stim_frames[1]
+                phases = self.stim_frames[-1]
+
+                self.stim = visual.GratingStim(win=self.psypy_window, size=size, pos=pos,
+                                               sf=params['spatial frequency'], units=params['units'])
+                self.stim.phase = phases[self.stim_frame_number]
 
         # Create the square for Light Dependant Resistors [change color depending of if other stims are on or not
         if self.settings['square on']:
@@ -389,18 +410,6 @@ class Main_UI(QWidget):
             self.square = visual.Rect(self.psypy_window, width=self.settings['square width'],
                                       height=self.settings['square width'], pos=self.square_pos, units='cm',
                                       lineColor=[col, col, col], fillColor=[col, col, col])
-
-        # Create the visual stimuli
-        if self.stim_on:
-            params = self.prepared_stimuli[self.current_stim_params_displayed]
-            pos = self.stim_frames[0]
-            radii = self.stim_frames[1]
-            # Create a LOOM
-            if 'loom' in params['Stim type'].lower():
-                self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
-                                          units=params['units'], pos=pos,
-                                          lineColor='black', fillColor='black')
-                self.stim.radius = radii[self.stim_frame_number]
 
     def stim_updater(self):
         params = self.prepared_stimuli[self.current_stim_params_displayed]
@@ -448,7 +457,7 @@ class Main_UI(QWidget):
             # Keep track of our progress as we update the stim
             self.stim_frame_number += 1
 
-            if self.stim_frame_number == len(self.stim_frames[1]):
+            if self.stim_frame_number == len(self.stim_frames[-1]):  # the last elemnt in stim frames is as long as the duration of the stim
                 # We reached the end of the stim frames, keep the stim on for a number of ms and then clean up
                 # Print time to last draw and from first draw to last
                 print('     ... Last stim draw was {}ms ago\n        ... From stim creation to last draw: {}'.
@@ -461,10 +470,13 @@ class Main_UI(QWidget):
                 print('     ... stim duration: {}'.format(elapsed * 1000))
 
                 # Get for how long the stimulus should be left on, and time it
-                params = self.prepared_stimuli[self.current_stim_params_displayed]
-                ontimer = time.clock()
-                time.sleep(int(int(params['on_time'])/1000))
-                print('     ... ON time {}'.format((time.clock()-ontimer)*1000))
+                try:
+                    params = self.prepared_stimuli[self.current_stim_params_displayed]
+                    ontimer = time.clock()
+                    time.sleep(int(int(params['on_time'])/1000))
+                    print('     ... ON time {}'.format((time.clock()-ontimer)*1000))
+                except:
+                    pass
 
                 # After everything is done, clean up
                 self.stim = None

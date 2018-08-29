@@ -176,7 +176,7 @@ def map_color_scale(value, leftMin=0, leftMax=255, rightMin=-1, rightMax=1, reve
     return rightMin + (valueScaled * rightSpan)
 
 
-def get_position_in_px(wnd, location, square_side):
+def get_position_in_px(wnd, location, square_side, return_scree_size=False):
     """
     In psychopy the centre of the window is pos 0,0. For us is more convenient if the top left corner is 0, 0
     so we need to map from our coordinate space to psychopys one
@@ -207,7 +207,10 @@ def get_position_in_px(wnd, location, square_side):
     else:  # location == 'bottom left'
         mappedloc = (x_translate, -y_translate)
 
-    return (int(mappedloc[0]), int(mappedloc[1]))
+    if not return_scree_size:
+        return int(mappedloc[0]), int(mappedloc[1])
+    else:
+        return int(mappedloc[0]), int(mappedloc[1]), screen_width_cm, screen_height_cm
 
 
 def unit_converter(wnd, data, in_unit='cm', out_unit='px'):

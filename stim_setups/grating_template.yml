@@ -1,0 +1,12 @@
+type: grating
+
+spatial frequency: 0.25   # If units == ‘deg’ or ‘cm’ units are in cycles per deg or cm as appropriate.
+bg color: 'wnd'        # if set as 'wnd' it will be the same color as the window bg, otherwise can be value in range 0-255
+fg color: 255          # color of foreground
+orientation: 0         # orientation in degs relative to the screen
+direction: 0           # 0 or 1, direction of movement [opposite directions knowing the orientation]
+velocity:  2           # Velocity in phases per second. Actual velocity depends on spatial frequency. smaller sf results in larger vel
+duration:  2000        # duration in ms
+
+
+units: deg              # Unit of measurement
