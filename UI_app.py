@@ -38,7 +38,7 @@ class Main_UI(QWidget):
 
         # Initialise variables
         self.prepared_stimuli = {}
-        self.current_stim_params_displayed = None
+        self.current_stim_params_displayed = ''
         self.ignored_params = ['name', 'units', 'type', 'modality', 'Stim type']  # Stim parameters with these will not be displayed
         # in the gui, they will have to be edited in the yaml files
 
@@ -57,15 +57,15 @@ class Main_UI(QWidget):
         self.threadpool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-        # Create GUI UI
-        self.create_widgets()
-        self.define_layout()
-        self.define_style_sheet()
-
         # Call Main Loop - on a separate thread
         # Start a thread that continously checks the parameters and refreshes the window
         main_loop_worker = Worker(self.main_loop)
         self.threadpool.start(main_loop_worker)
+
+        # Create GUI UI
+        self.create_widgets()
+        self.define_layout()
+        self.define_style_sheet()
 
         # Load parameters YAML files
         self.get_stims_yaml_files_from_folder()
@@ -347,6 +347,9 @@ class Main_UI(QWidget):
         """
         Creates and initialises stimuli
         """
+        # Need to import from psychopy here or it gives an error. Takes <<1 ms
+        from psychopy import visual
+
         # TODO non linear looms and gratings
         params = self.prepared_stimuli[self.current_stim_params_displayed]
 
@@ -358,24 +361,14 @@ class Main_UI(QWidget):
             self.stim.draw()
 
         # Print how long it took to create the stim
-        print('Stim generation took: {}'.format((time.clock()-self.stim_creation_timer)*1000))
+        print('\n\nStim generation took: {}'.format((time.clock()-self.stim_creation_timer)*1000))
 
-    def stim_destroyer(self):
-        """
-        Cleans up the psychopy window after the stimulus ended and it re-initialises the variabels
-        """
+    def stim_updater(self):
         params = self.prepared_stimuli[self.current_stim_params_displayed]
 
-        # Clean up stimuli
         if 'loom' in params['Stim type'].lower():
-            # Cant find a better way to remove looms than making them super tiny
-            self.stim.radius = 0.001
+            self.stim.radius = self.stim_frames[self.stim_frame_number]
             self.stim.draw()
-
-        # Clean up variables
-        self.stim_frames = False
-        self.stim_frame_number = False
-        self.stim_on = False
 
     def stim_manager(self):
         """
@@ -388,8 +381,10 @@ class Main_UI(QWidget):
         :return:
         """
         if self.stim_on:
-            # Need to import from psychopy here or it gives an error. Takes <<1 ms
-            from psychopy import visual
+            if isinstance(self.stim_frames, bool):  # if it is we havent generated the stim frames yet
+                # This is due to the fact that the frames are generated in another thread and the
+                # that might have not been done by the time that stim_manager is called in the main loop
+                return
 
             # If stim is just being created, start clock to time its duration
             if not self.stim_frame_number:
@@ -398,29 +393,33 @@ class Main_UI(QWidget):
                 # Initialise variable to keep track of progress during stim update
                 self.stim_frame_number = 0
 
-            # Create the stimulus object
-            self.stim_creator()
+                # Create the stimulus object
+                self.stim_creator()
 
-            # Keep track of our progress as we update the loom
+            # Update the stim
+            self.stim_updater()
+
+            # Keep track of our progress as we update the stim
             self.stim_frame_number += 1
 
             if self.stim_frame_number == len(self.stim_frames):
                 # We reached the end of the stim frames, keep the stim on for a number of ms and then clean up
                 # Print for how long the stimulus has been on
                 elapsed = time.clock() - self.stim_timer
-                print('Stim duration: {}'.format(elapsed * 1000))
+                print('     ... stim duration: {}'.format(elapsed * 1000))
 
                 # Get for how long the stimulus should be left on, and time it
                 params = self.prepared_stimuli[self.current_stim_params_displayed]
                 ontimer = time.clock()
                 time.sleep(int(int(params['on_time'])/1000))
-                print('ON time {}'.format((time.clock()-ontimer))*1000)
+                print('     ... ON time {}'.format((time.clock()-ontimer)*1000))
 
                 # After everything is done, clean up
                 self.stim_frames = False
                 self.stim_frame_number = False
                 self.stim_on = False
 
+                print('     ... stim disappeared after {}'.format(round(time.clock()-self.stim_timer, 2)*1000))
 
 
     ####################################################################################################################
@@ -444,8 +443,8 @@ class Main_UI(QWidget):
                 if not self.current_stim_params_displayed is None:
                     label = get_param_label(param)
                     value = get_param_val(param, string=True)
-                    if label.text():
-                        self.prepared_stimuli[self.current_stim_params_displayed][label.text()] = value
+                    if len(label)>1 and self.current_stim_params_displayed:
+                        self.prepared_stimuli[self.current_stim_params_displayed][label] = value
 
     def update_params_widgets(self, stim_name):
         """ Takes the parameters form one of the loaded stims [in the list widget] and updates the widgets to display
@@ -475,8 +474,8 @@ class Main_UI(QWidget):
             assigned = 0  # Keep track of how many parameters have been assigned to a widget
             for pnum in sorted(self.params_widgets_dict.keys()):
                 if 'Param' in pnum:
-                    label = get_param_label(self.params_widgets_dict[pnum])
-                    value = get_param_val(self.params_widgets_dict[pnum])
+                    label = get_param_label(self.params_widgets_dict[pnum], object=True)
+                    value = get_param_val(self.params_widgets_dict[pnum], object=True)
 
                     if assigned >= len(params_names):
                         # Additional widgets should be empty
@@ -493,7 +492,7 @@ class Main_UI(QWidget):
                 print(' Couldnt display all params, need more widgets')
         except:
             # TODO: this seems to result in the application crashing if something went wrong
-            raise Warning('Couldnt load parameters from file {}'.format(stim_name + '.yml'))
+            raise Warning('Couldnt load parameters from file {}'.format(stim_name))
 
     def load_stim_params_from_list_widget(self):
         """
@@ -549,7 +548,7 @@ class Main_UI(QWidget):
         params_files = get_files(files_folder)
 
         # Get list of files already in list widget
-        files_in_list = get_list_widget_items(self.param_files)
+        files_in_list = get_list_widget_items(self.param_files_list)
 
         # If we loaded new files add them to the widget
         for short in sorted(params_files.keys()):
@@ -580,7 +579,7 @@ class Main_UI(QWidget):
             self.stim_on = True
             # get params and call stim generator to calculate stim frames
             params = self.prepared_stimuli[self.current_stim_params_displayed]
-            self.stim_frames = stim_calculator(self.screenMs, params)
+            self.stim_frames = stim_calculator(params, self.screenMs)
 
 
     ####################################################################################################################
@@ -609,12 +608,6 @@ class Main_UI(QWidget):
 
             # Generate, update and clean up stimuli
             self.stim_manager()
-
-            if isinstance(self.stim_frames, bool):
-                try:
-                    self.stim.radius=0
-                except:
-                    pass
 
             # Update psychopy window
             try:

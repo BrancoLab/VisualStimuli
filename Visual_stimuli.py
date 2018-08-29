@@ -3,7 +3,7 @@ import numpy as np
 
 def loomer(params, screenMs):
     # Prepare raddi steps
-    numExpSteps = np.ceil(int(params['expand_time']) / screenMs) + 1
+    numExpSteps = np.ceil(int(params['expand_time']) / screenMs)
     if params['modality'] == 'linear':
         radii = np.linspace(float(params['start_size']),
                             float(params['end_size']), numExpSteps)
@@ -16,11 +16,11 @@ def loomer(params, screenMs):
     return radii
 
 
-def stim_calculator(screenMs, params):
+def stim_calculator(params, screenMs):
     # Call subfunctions to generate the stimulus
     if 'loom' in params['Stim type'].lower():
-        stim_frames = loomer(screenMs, params)
-
+        stim_frames = loomer(params, screenMs)
+    return stim_frames
 
 
 

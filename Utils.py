@@ -100,25 +100,31 @@ def get_files(fld, ending='yml'):
 ####################################################################################################################
 
 
-def get_param_label(param):
+def get_param_label(param, object=False):
     """
-    Given a param object returns its label text as a string
+    Given a param object returns its label text as a string or as the widget object itsels
     """
-    return list(param.values())[0][0].text()
-
-
-def get_param_val(param, string=False):
-    """
-    Given a param object returns its value as a string or int
-    """
-    val = list(param.values())[0][1].text()
-    if not string:
-        if not val:
-            val = 0
-
-        return int(val)
+    if not object:
+        return list(param.values())[0][0].text()
     else:
-        return val
+        return list(param.values())[0][0]
+
+
+def get_param_val(param, string=False, object=False):
+    """
+    Given a param object returns its value as a string or int or as the widget object itsels
+    """
+    if not object:
+        val = list(param.values())[0][1].text()
+        if not string:
+            if not val:
+                val = 0
+
+            return int(val)
+        else:
+            return val
+    else:
+        return list(param.values())[0][1]
 
 
 def get_list_widget_items(list_wdg):
