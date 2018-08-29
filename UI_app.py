@@ -539,6 +539,8 @@ class Main_UI(QWidget):
                 stim_name = stim_name.text()
 
             # Get the parameters for the selected stim
+            if not stim_name in self.prepared_stimuli.keys():
+                return
             params = self.prepared_stimuli[stim_name]
 
             # Keep track of which is the stimulus we are currently displaying
@@ -593,36 +595,45 @@ class Main_UI(QWidget):
             self.current_stim_params_displayed = file  # Set the currently displayed stim accordingly
 
     def remove_loaded_stim_from_widget_list(self):
-        # TODO --  this seems to be buggy
+        self.ready = 'Busy'
         try:
             if self.loaded_stims_list.count() >= 1:
                 # Remove item from loaded stims dictionary
+                if self.loaded_stims_list.currentItem() is None:
+                    return
+
                 sel = self.loaded_stims_list.currentItem().text()
-                del self.prepared_stimuli[sel]
+                items = get_list_widget_items(self.loaded_stims_list)  # items already in the list widget
+                if sel in self.prepared_stimuli.keys():
+                    del self.prepared_stimuli[sel]
 
                 # Clean up widgets
                 for param, wdgets in self.params_widgets_dict.items():
                     if param not in ['Background Luminosity', 'Delay']:
-                        label = get_param_label(wdgets)
-                        value = get_param_val(wdgets)
+                        label = get_param_label(wdgets, object=True)
+                        value = get_param_val(wdgets, object=True)
                         label.setText('')
                         value.setText('')
 
                 # Remove item from list widget
                 qIndex = self.loaded_stims_list.indexFromItem(self.loaded_stims_list.selectedItems()[0])
-                self.loaded_stims_list.model().removeRow(qIndex.row())
-
-                # Display the params of the item above in the list if there is any
-                items = get_list_widget_items(self.loaded_stims_list.count())  # items already in the list widget
-                if items:
-                    # Load from the first item in the list
-                    self.update_params_widgets(items[0])
+                if qIndex.row() > 0:
+                    self.loaded_stims_list.model().removeRow(qIndex.row())
+                    # Display the params of the item above in the list if there is any
+                    items = get_list_widget_items(self.loaded_stims_list)  # items already in the list widget
+                    if items:
+                        # Load from the first item in the list
+                        self.update_params_widgets(items[0])
                 else:
+                    self.loaded_stims_list.item(0).setText('deleted stim')
                     # I think that this is where the bug is
                     self.filename_edit.setText('No stim loaded')
                     self.current_stim_params_displayed = None
+
         except:
             raise Warning('Something went wrong...')
+
+        self.ready = 'Ready'
 
     # FILES handling
     def get_stims_yaml_files_from_folder(self):

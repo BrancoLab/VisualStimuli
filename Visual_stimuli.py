@@ -53,6 +53,8 @@ def grater(wnd, params, screenMs):
     vel = float(params['velocity'])
     if vel > 0:
         phase = np.linspace(0, 2, frames_per_sec/vel)
+        if len(phase) == 0:
+            pass
         repeats = int(numExpSteps)/len(phase)
         if repeats >= 1:
             phases = np.tile(phase, int(repeats))

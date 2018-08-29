@@ -130,8 +130,12 @@ def get_param_val(param, string=False, object=False):
 def get_list_widget_items(list_wdg):
     # Give a PyQt list widget return a list of all items in it
     items = []  # items already in the list widget
-    for index in range(list_wdg.count()):
-        items.append(list_wdg.item(index).text())
+    if isinstance(list_wdg.count(), int):
+        if not list_wdg.item(0) is None:
+            items.append(list_wdg.item(0).text())
+    else:
+        for index in range(list_wdg.count()):
+            items.append(list_wdg.item(index).text())
     return items
 
 ####################################################################################################################
