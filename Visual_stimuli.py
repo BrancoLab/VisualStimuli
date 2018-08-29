@@ -30,6 +30,7 @@ def loomer(wnd, params, screenMs):
         raise Warning('Couldnt compute loom parameters')
     return pos, radii
 
+
 def grater(wnd, params, screenMs):
     """
     Calculates the data for generating a grating stimulus given some params
@@ -39,20 +40,26 @@ def grater(wnd, params, screenMs):
     x, y, width, height = get_position_in_px(wnd, 'top left', 0, return_scree_size=True)
     if params['units'] == 'cm':
         pos = (0, 0)
-        screen_size = (width, height)
+        screen_size = (width, width)
     else:
         pos = (0, 0)
-        screen_size = (width*2, height*2)
+        screen_size = (width*2, width*2)
 
     """
     The velocity is set by specifying the phase of the grating at each frame. 
     To do this: create an array that covers an entire phase cycle [0-1] and is 1/n frames long where n depends on the 
-    velocity [i.e. phases per second]. The array is then repeat to be as long as the stimulus we are creating
+    velocity [i.e. phases per second]. The array is then repeat to be as long as the stimulus we are creating.
+    The sign of the phases depends on the direction of movement 
     """
     frames_per_sec = np.ceil(1000 / screenMs)
     vel = float(params['velocity'])
+    if float(params['direction']) <= 0:
+        phase_max = -2
+    else:
+        phase_max = 2
+
     if vel > 0:
-        phase = np.linspace(0, 2, frames_per_sec/vel)
+        phase = np.linspace(0, phase_max, frames_per_sec/vel)
         if len(phase) == 0:
             pass
         repeats = int(numExpSteps)/len(phase)
@@ -65,7 +72,19 @@ def grater(wnd, params, screenMs):
             a = 1
     else:
         phases = np.ones((int(numExpSteps), 1))
-    return pos, screen_size, phases
+
+    # Get orientation
+    orientation = int(params['orientation'])
+
+    # get colors
+    fg = map_color_scale(int(params['fg color']))
+    #
+    # if params['bg color'] == 'wnd':
+    #     bg = wnd.color[0]
+    # else:
+    #     bg = map_color_scale(int(params['bg color']))
+
+    return pos, screen_size, orientation, fg, phases
 
 
 def stim_calculator(wnd, params, screenMs):

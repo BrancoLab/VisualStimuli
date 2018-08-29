@@ -396,9 +396,12 @@ class Main_UI(QWidget):
                 pos = self.stim_frames[0]
                 size = self.stim_frames[1]
                 phases = self.stim_frames[-1]
+                ori = self.stim_frames[2]
+                fg_col = self.stim_frames[3]
+                bg_col = self.stim_frames[4]
 
-                self.stim = visual.GratingStim(win=self.psypy_window, size=size, pos=pos,
-                                               sf=params['spatial frequency'], units=params['units'])
+                self.stim = visual.GratingStim(win=self.psypy_window, size=size, pos=pos, ori=ori, color=fg_col,
+                                               sf=params['spatial frequency'], units=params['units'], interpolate=True)
                 self.stim.phase = phases[self.stim_frame_number]
 
         # Create the square for Light Dependant Resistors [change color depending of if other stims are on or not
