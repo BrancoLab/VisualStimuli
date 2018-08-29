@@ -1,2 +1,10 @@
-{end_size: 5, expand_time: 500, modality: linear, name: classic, on_time: 1000, pos: [
-    0, 0], start_size: 0.5, type: loom, units: cm}
+type: loom
+modality: linear
+
+start_size: 0.5
+end_size: 5
+expand_time: 500
+on_time: 1000
+pos: 0, 0
+
+units: deg

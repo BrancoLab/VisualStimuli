@@ -1,0 +1,2 @@
+{Stim type: loom, end_size: '20', expand_time: '500', modality: linear, on_time: '1000',
+  pos: '-500, 500', start_size: '0.5', type: loom, units: deg}

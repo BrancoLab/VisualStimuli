@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from psychopy import monitors
+from psychopy import monitors, tools
 import yaml
 import os
 
@@ -175,3 +175,60 @@ def map_color_scale(value, leftMin=0, leftMax=255, rightMin=-1, rightMax=1, reve
     # Convert the 0-1 range into a value in the right range.
     return rightMin + (valueScaled * rightSpan)
 
+
+def get_position_in_px(wnd, location, square_side):
+    """
+    In psychopy the centre of the window is pos 0,0. For us is more convenient if the top left corner is 0, 0
+    so we need to map from our coordinate space to psychopys one
+
+    :param wnd: psychopy window
+
+    :param location: which corner of the screen are we interested in
+    :return:
+    """
+    screen_size_px = wnd.monitor.getSizePix()
+    screen_width_cm = wnd.monitor.getWidth()
+    half_width_cm = screen_width_cm/2
+
+    screen_height_cm = (screen_width_cm/screen_size_px[0])*screen_size_px[1]
+    half_height_cm = screen_height_cm/2
+
+    half_side_cm = int(square_side/2)
+
+    x_translate, y_translate = -half_width_cm+half_side_cm, half_height_cm-half_side_cm
+
+    # Go from our mapping to psychopy location
+    if location == 'top left':
+        mappedloc = (x_translate, y_translate)
+    elif location == 'top right':
+        mappedloc = (-x_translate, y_translate)
+    elif location == 'bottom right':
+        mappedloc = (-x_translate, -y_translate)
+    else:  # location == 'bottom left'
+        mappedloc = (x_translate, -y_translate)
+
+    return (int(mappedloc[0]), int(mappedloc[1]))
+
+
+def unit_converter(wnd, data, in_unit='cm', out_unit='px'):
+    """
+    Map between different units for psychopy. Most commonly used to convert a measure from pixels to degrees
+    """
+    cm_per_px = wnd.monitor.getWidth() / wnd.monitor.getSizePix()[0]
+    out = 0
+    if in_unit == 'cm':
+        if out_unit == 'px':
+            out = tools.monitorunittools._cm2pix(data, 0, wnd)
+    if in_unit == 'deg' or in_unit == 'degs':
+        if out_unit == 'px':
+            out = tools.monitorunittools._deg2pix(data, 0, wnd)
+        else:  # out cm
+            out = tools.monitorunittools._deg2pix(data, 0, wnd)
+            out *= cm_per_px
+    if in_unit == 'px' or in_unit == 'pix':
+        if out_unit == 'deg' or out_unit == 'degs':
+            px_per_deg = tools.monitorunittools._deg2pix(1, 0, wnd)
+            out = data / px_per_deg
+        else:  #out in cm
+            out = data * cm_per_px
+    return out

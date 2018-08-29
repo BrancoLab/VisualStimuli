@@ -37,6 +37,8 @@ class Main_UI(QWidget):
         self.settings = load_yaml(config_path)
 
         # Initialise variables
+        self.ready = False
+
         self.prepared_stimuli = {}
         self.current_stim_params_displayed = ''
         self.ignored_params = ['name', 'units', 'type', 'modality', 'Stim type']  # Stim parameters with these will not be displayed
@@ -51,7 +53,8 @@ class Main_UI(QWidget):
         """
         self.stim_on = False
         self.stim, self.stim_frames, self.stim_frame_number = None, False, False
-
+        self.last_draw, self.draws = 0, []
+        self.square, self.square_pos = None, (0, 0)  # Reference to psychopy rectangle to be drawn above light dependant resistor
         # ==============================================================================
         # START MULTITHREDING
         self.threadpool = QThreadPool()
@@ -78,6 +81,9 @@ class Main_UI(QWidget):
         # Take care of the layout
         self.grid = QGridLayout()
         self.grid.setSpacing(25)
+
+        # Status label
+        self.status_label  = QLabel('Loading...')
 
         # Available yml file
         self.params_files_label = QLabel('Parameter files')
@@ -137,6 +143,11 @@ class Main_UI(QWidget):
         self.bench_btn.clicked.connect(self.nofunc)
 
     def define_layout(self):
+        # Status label
+        self.grid.addWidget(self.status_label, 16, 0, 1, 2)
+        self.status_label.setObjectName('Status')
+        self.status_label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+
         # Available yml files
         self.grid.addWidget(self.params_files_label, 0, 0)
 
@@ -190,7 +201,7 @@ class Main_UI(QWidget):
         # Finalise layout
         self.setLayout(self.grid)
         self.setContentsMargins(50, 10, 10, 25)
-        self.setGeometry(100, 100, 1000, 1800)
+        self.setGeometry(4000, 100, 1000, 800)
         self.setWindowTitle('Review')
 
         # Benchamrk btn
@@ -241,6 +252,14 @@ class Main_UI(QWidget):
                         min-width: 80px;
                         min-height: 40px;
                     }
+                    
+                    QLabel#Status {
+                        color: #000000;
+                        background-color: #b40505;
+                        font-size: 14pt;
+                        max-height: 40pt;
+                        border-radius: 6px; 
+                        }
                     
                     QLabel#ParamName {
                         color: #202223;
@@ -319,7 +338,15 @@ class Main_UI(QWidget):
                                           fullscr=self.settings['fullscreen'], units=self.settings['unit'])
         self.screenMs, _, _ = self.psypy_window.getMsPerFrame()
 
-        # Print the results to the consol
+        # Get position of the square stimulus [if on]
+        if self.settings['square on']:
+            self.square_pos = get_position_in_px(self.psypy_window, self.settings['square pos'],
+                                                 self.settings['square width'])
+
+        # Update status
+        self.ready = 'Ready'
+
+        # Print the results to the console
         print('\n========================================')
         print('''
         Initialised Psychopy window: {}
@@ -345,23 +372,35 @@ class Main_UI(QWidget):
 
     def stim_creator(self):
         """
-        Creates and initialises stimuli
+        Creates and initialises stimuli, including the LDR square
         """
         # Need to import from psychopy here or it gives an error. Takes <<1 ms
         from psychopy import visual
 
         # TODO non linear looms and gratings
-        params = self.prepared_stimuli[self.current_stim_params_displayed]
 
-        if 'loom' in params['Stim type'].lower():
-            self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
-                                      units=params['units'],
-                                      lineColor='white', fillColor='black')
-            self.stim.radius = self.stim_frames[self.stim_frame_number]
-            self.stim.draw()
 
-        # Print how long it took to create the stim
-        print('\n\nStim generation took: {}'.format((time.clock()-self.stim_creation_timer)*1000))
+        # Create the square for Light Dependant Resistors [change color depending of if other stims are on or not
+        if self.settings['square on']:
+            if self.stim_on:
+                col = map_color_scale(self.settings['square default col'])
+            else:
+                col = -map_color_scale(self.settings['square default col'])
+            self.square = visual.Rect(self.psypy_window, width=self.settings['square width'],
+                                      height=self.settings['square width'], pos=self.square_pos, units='cm',
+                                      lineColor=[col, col, col], fillColor=[col, col, col])
+
+        # Create the visual stimuli
+        if self.stim_on:
+            params = self.prepared_stimuli[self.current_stim_params_displayed]
+            pos = self.stim_frames[0]
+            radii = self.stim_frames[1]
+            # Create a LOOM
+            if 'loom' in params['Stim type'].lower():
+                self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
+                                          units=params['units'], pos=pos,
+                                          lineColor='black', fillColor='black')
+                self.stim.radius = radii[self.stim_frame_number]
 
     def stim_updater(self):
         params = self.prepared_stimuli[self.current_stim_params_displayed]
@@ -377,8 +416,6 @@ class Main_UI(QWidget):
         * This function creates the stimulus object
         * Everytime stim_manager is called it loops over the stimulus frames and updates it
         * When all frames have been played, the window is cleaned
-
-        :return:
         """
         if self.stim_on:
             if isinstance(self.stim_frames, bool):  # if it is we havent generated the stim frames yet
@@ -388,22 +425,37 @@ class Main_UI(QWidget):
 
             # If stim is just being created, start clock to time its duration
             if not self.stim_frame_number:
+                self.ready = 'Busy'
+                # Update status label
+                self.update_status_label()
+
                 self.stim_timer = time.clock()
                 self.stim_creation_timer = time.clock()
                 # Initialise variable to keep track of progress during stim update
                 self.stim_frame_number = 0
 
-                # Create the stimulus object
-                self.stim_creator()
+            """
+            Two options: create the stim one and then update it using stim_updater or crate a new stim everyframe.
+            It looks like creating a new stim every frame [using stim_creator] results in more consistent time
+            between frames
+            """
+            # Create the stimulus object
+            self.stim_creator()
 
             # Update the stim
-            self.stim_updater()
+            # self.stim_updater()
 
             # Keep track of our progress as we update the stim
             self.stim_frame_number += 1
 
-            if self.stim_frame_number == len(self.stim_frames):
+            if self.stim_frame_number == len(self.stim_frames[1]):
                 # We reached the end of the stim frames, keep the stim on for a number of ms and then clean up
+                # Print time to last draw and from first draw to last
+                print('     ... Last stim draw was {}ms ago\n        ... From stim creation to last draw: {}'.
+                      format((time.clock()-self.last_draw)*1000, (self.last_draw - self.stim_timer)*1000))
+                self.draws = np.array(self.draws)[1:-1]
+                print('Avg time between draws: {}, std {}'.format(np.mean(self.draws), np.std(self.draws)))
+                self.draws = []
                 # Print for how long the stimulus has been on
                 elapsed = time.clock() - self.stim_timer
                 print('     ... stim duration: {}'.format(elapsed * 1000))
@@ -415,17 +467,36 @@ class Main_UI(QWidget):
                 print('     ... ON time {}'.format((time.clock()-ontimer)*1000))
 
                 # After everything is done, clean up
+                self.stim = None
                 self.stim_frames = False
                 self.stim_frame_number = False
                 self.stim_on = False
 
-                print('     ... stim disappeared after {}'.format(round(time.clock()-self.stim_timer, 2)*1000))
+                self.ready = 'Ready'
+                # Update status label
+                self.update_status_label()
 
+                print('     ... stim disappeared after {}'.format((time.clock()-self.stim_timer)*1000))
+        else:
+            # Call stim creator anyway so that we can update the color of the LDR sqare if one is present
+            self.stim_creator()
 
     ####################################################################################################################
     """  FUNCTIONS  """
     ####################################################################################################################
-    # PARAMS handling
+    # PARAMS and WIDGETS
+    def update_status_label(self):
+        if not self.ready:
+            self.status_label.setText('Loading...')
+            self.status_label.setStyleSheet('background-color: orange')
+        else:
+            if self.ready == 'Ready':
+                self.status_label.setText('READY')
+                self.status_label.setStyleSheet('background-color: green')
+            else:
+                self.status_label.setText('Busy...')
+                self.status_label.setStyleSheet('background-color: gray')
+
     def read_from_params_widgets(self):  # <--- !!!
         """
         Loops over the params widgets and reads their values.
@@ -575,11 +646,12 @@ class Main_UI(QWidget):
 
     # LAUNCH btn function
     def launch_stim(self):
-        if self.current_stim_params_displayed:
-            self.stim_on = True
-            # get params and call stim generator to calculate stim frames
-            params = self.prepared_stimuli[self.current_stim_params_displayed]
-            self.stim_frames = stim_calculator(params, self.screenMs)
+        if self.ready == 'Ready':
+            if self.current_stim_params_displayed:
+                self.stim_on = True
+                # get params and call stim generator to calculate stim frames
+                params = self.prepared_stimuli[self.current_stim_params_displayed]
+                self.stim_frames = stim_calculator(self.psypy_window, params, self.screenMs)
 
 
     ####################################################################################################################
@@ -598,19 +670,32 @@ class Main_UI(QWidget):
         """
         # Start psychopy window
         self.start_psychopy()
+        # Update status label
+        self.update_status_label()
 
         while True:  # Keep loopingnin synch with the screen refresh rate, check the params and update stuff
+            # print(time.clock())
             # Update parameters
-            self.read_from_params_widgets()
+            if self.ready == 'Ready':
+                self.read_from_params_widgets()
 
-            # Update background
-            self.change_bg_lum()
+                # Update background
+                self.change_bg_lum()
 
             # Generate, update and clean up stimuli
             self.stim_manager()
 
             # Update psychopy window
             try:
+                if self.settings['square on'] and self.square is not None:
+                    self.square.draw()
+
+                if self.stim is not None:
+                    self.stim.draw()
+                    print('     ... time between draws: {}'.format((time.clock()-self.last_draw)*1000))
+                    self.draws.append((time.clock()-self.last_draw)*1000)
+                    self.last_draw = time.clock()
+
                 self.psypy_window.flip()
             except:
                 print('Didnt flip')

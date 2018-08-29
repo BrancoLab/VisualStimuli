@@ -6,9 +6,15 @@ Distance: 40         # Distance from the mouse
 
 # DEFINE PSYCHOPY WINDOW
 wnd_PxSize: 2400, 1200 # Size of the window in px
-fullscreen: false      # Full-screen mode
+fullscreen: true      # Full-screen mode
 unit: 'cm'             # Default unit of measurement for stims
-default_bg: 255        # Default background color
+default_bg: 128        # Default background color
+
+# DEFINE LDR SQUARE [white/black square above a Light Dependant Resistor to get loom onset times]
+square on: true           # using the square or not
+square pos: 'bottom right'          # Location of the square relative to the screen
+square width: 5           # Square side length in cm
+square default col: 255  # default color [when the stimulus is off], when stim is on the color is inverted
 
 # DEFINE PATHS
 stim_configs: 'C:\Users\Federico\Documents\GitHub\VisualStimuli\stim_setups'
