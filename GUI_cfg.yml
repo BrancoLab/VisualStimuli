@@ -1,8 +1,8 @@
 # DEFINE THE MONITOR
-Name: 'Dell P2715Q'  # Name of the monitor
-PxSize: 3840, 2160 # Size of the monitor in pixel
-Width: 60            # Width of the monitor in cm
-Distance: 40         # Distance from the mouse
+Name: 'Projector LF'  # Name of the monitor
+PxSize: 1920, 1080 # Size of the monitor in pixel
+Width: 80            # Width of the monitor in cm
+Distance: 60         # Distance from the mouse
 
 # DEFINE PSYCHOPY WINDOW
 wnd_PxSize: 2400, 1200 # Size of the window in px
@@ -17,6 +17,6 @@ square width: 5           # Square side length in cm
 square default col: 255  # default color [when the stimulus is off], when stim is on the color is inverted
 
 # DEFINE PATHS
-stim_configs: 'C:\Users\Federico\Documents\GitHub\VisualStimuli\stim_setups'
+stim_configs: '.\stim_setups'
 
 

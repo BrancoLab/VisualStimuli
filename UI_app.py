@@ -35,7 +35,7 @@ class Main_UI(QWidget):
         # ==============================================================================
         # ==============================================================================
         # Load parameters from config file
-        config_path = 'C:\\Users\\Federico\\Documents\\GitHub\\VisualStimuli\\GUI_cfg.yml'
+        config_path = '.\\GUI_cfg.yml'
         self.settings = load_yaml(config_path)
 
         # Initialise variables
@@ -235,7 +235,7 @@ class Main_UI(QWidget):
         # Finalise layout
         self.setLayout(self.grid)
         self.setContentsMargins(50, 10, 10, 25)
-        self.setGeometry(4000, 100, 1000, 800)
+        self.setGeometry(0, 0, 1000, 800)
         self.setWindowTitle('Review')
 
         # Benchamrk btn
