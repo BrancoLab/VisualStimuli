@@ -9,6 +9,7 @@ import numpy as np
 
 from Utils import *
 from Visual_stimuli import stim_calculator
+from benchmark_results_analysis import *
 
 
 ####################################################################################################################
@@ -95,13 +96,16 @@ class Main_UI(QWidget):
         """
         - benchmarking: has the benchmarking button been pressed
         -stim duration: keep track of how long each stimulus lasted for
-        - draw speed: keep track of how long it took to draw each frame of the stimulus
-        - test_done: keep track of how many stimuli have been delivered during the test
-        - max_test: number of stimuli to deliver as part of the test
+        - benchmark_results: dictionary to store the results of the tests (e.g. stim on duration)
+        - number_of_tests: number of stimuli to deliver as part of the test
         """
         self.benchmarking = False
-        self.stim_duration, self.draw_speed = [], []
-        self.test_done, self.max_tests = 0, 5
+        self.benchmark_results = {'Stim duration':[],
+                                  'Draw duration avg':[],
+                                  'Draw duration std':[],
+                                  'On time duration':[],
+                                  'Number frames per stim':[]}
+        self.tests_done, self.number_of_tests = 0, 500
 
 ####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -366,7 +370,7 @@ class Main_UI(QWidget):
         # Create a window, get mseconds per screen refresh
         self.psypy_window = visual.Window([int(size[0]), int(size[1])], monitor=mon, color=[col, col, col],
                                           fullscr=self.settings['fullscreen'], units=self.settings['unit'])
-        self.screenMs, _, _ = self.psypy_window.getMsPerFrame()
+        avg, std, self.screenMs = self.psypy_window.getMsPerFrame(showVisual=True, msg='Testing refresh rate')
 
         if abs(self.screenMs - 16)>5:
             a = 1
@@ -508,8 +512,6 @@ class Main_UI(QWidget):
                 elapsed = time.clock() - self.stim_timer
                 print('     ... stim duration: {}'.format(elapsed * 1000))
 
-
-
                 # Get for how long the stimulus should be left on, and time it
                 slept = 0
                 try:
@@ -522,9 +524,14 @@ class Main_UI(QWidget):
                     pass
 
                 if self.benchmarking:
-                    self.stim_duration.append((elapsed, slept))
-                    self.draw_speed.append((avg_draw, std_draw))
-                    self.test_done += 1
+                    # Store results
+                    self.benchmark_results['Ms per frame'] = self.screenMs
+                    self.benchmark_results['Stim duration'].append(elapsed)
+                    self.benchmark_results['On time duration'].append(slept)
+                    self.benchmark_results['Draw duration avg'].append(avg_draw)
+                    self.benchmark_results['Draw duration std'].append(std_draw)
+                    self.benchmark_results['Number frames per stim'].append(len(self.stim_frames[-1])-1)
+                    self.tests_done += 1
 
 
                 # After everything is done, clean up
@@ -625,7 +632,6 @@ class Main_UI(QWidget):
             if assigned < len(params_names):  # Too many params to display for the number of widgets in the GUI
                 print(' Couldnt display all params, need more widgets')
         except:
-            # TODO: this seems to result in the application crashing if something went wrong
             raise Warning('Couldnt load parameters from file {}'.format(stim_name))
 
     def load_stim_params_from_list_widget(self):
@@ -652,7 +658,6 @@ class Main_UI(QWidget):
                     return
 
                 sel = self.loaded_stims_list.currentItem().text()
-                items = get_list_widget_items(self.loaded_stims_list)  # items already in the list widget
                 if sel in self.prepared_stimuli.keys():
                     del self.prepared_stimuli[sel]
 
@@ -750,12 +755,13 @@ class Main_UI(QWidget):
         while True:  # Keep loopingn in synch with the screen refresh rate, check the params and update stuff
             if self.benchmarking:
                 if self.ready == 'Ready':
-                    if self.test_done >= self.max_tests:
+                    if self.tests_done >= self.number_of_tests:
                         self.benchmarking = False
-                        self.test_results()
+                        self.stim_on = False
+                        plot_benchmark_results(self.benchmark_results)
                     else:
-                        print('\nTest {}'.format(self.test_done))
-                        time.sleep(np.random.randint(5))
+                        print('\nTest {}'.format(self.tests_done))
+                        time.sleep(np.random.randint(2))
                         self.launch_stim()
 
             # Update parameters
@@ -789,19 +795,6 @@ class Main_UI(QWidget):
     def nofunc(self):
         # Decoy function to set up empty buttons during GUI design
         pass
-
-    def test_results(self):
-        import matplotlib.pyplot as plt
-
-        plt.figure()
-        plt.plot([x[0] for x in self.stim_duration])
-        plt.plot([x[1] for x in self.stim_duration])
-
-        plt.figure()
-        plt.plot([x[0] for x in self.draw_speed])
-        plt.plot([x[1] for x in self.draw_speed])
-
-        plt.show()
 
 ####################################################################################################################
 ####################################################################################################################
