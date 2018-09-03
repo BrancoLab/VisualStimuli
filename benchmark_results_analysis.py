@@ -29,7 +29,6 @@ def plot_benchmark_results(results):
     axarr[1].plot(results['Draw duration std'], color=[0.4, 0.4, 0.8], label='Draw duration std')
     axarr[1].axhline(results['Ms per frame'], color=[.6, .6, .6], label='Ms per frame')
 
-
     axarr[2].set(title='Stim ON duration (ms)', ylim=[950, 1050])
     axarr[2].plot([x*1000 for x in results['On time duration']], color='blue', label='On duration')
 

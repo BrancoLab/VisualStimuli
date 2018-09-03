@@ -105,7 +105,7 @@ class Main_UI(QWidget):
                                   'Draw duration std':[],
                                   'On time duration':[],
                                   'Number frames per stim':[]}
-        self.tests_done, self.number_of_tests = 0, 500
+        self.tests_done, self.number_of_tests = 0, 100
 
 ####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -450,13 +450,7 @@ class Main_UI(QWidget):
             self.square = visual.Rect(self.psypy_window, width=self.settings['square width'],
                                       height=self.settings['square width'], pos=self.square_pos, units='cm',
                                       lineColor=[col, col, col], fillColor=[col, col, col])
-
-    def stim_updater(self):
-        params = self.prepared_stimuli[self.current_stim_params_displayed]
-
-        if 'loom' in params['Stim type'].lower():
-            self.stim.radius = self.stim_frames[self.stim_frame_number]
-            self.stim.draw()
+            self.square.draw()
 
     def stim_manager(self):
         """
@@ -491,9 +485,6 @@ class Main_UI(QWidget):
             # Create the stimulus object
             self.stim_creator()
 
-            # Update the stim
-            # self.stim_updater()
-
             # Keep track of our progress as we update the stim
             self.stim_frame_number += 1
 
@@ -505,7 +496,7 @@ class Main_UI(QWidget):
                 self.draws = np.array(self.draws)[1:-1]
 
                 avg_draw, std_draw = np.mean(self.draws), np.std(self.draws)
-                print('Avg time between draws: {}, std {}'.format(avg_draw, std_draw))
+                print('     ... avg time between draws: {}, std {}'.format(avg_draw, std_draw))
 
                 self.draws = []
                 # Print for how long the stimulus has been on
@@ -760,6 +751,10 @@ class Main_UI(QWidget):
                         self.stim_on = False
                         plot_benchmark_results(self.benchmark_results)
                     else:
+                        self.stim_on = False
+                        self.stim_creator()
+                        self.psypy_window.flip()
+
                         print('\nTest {}'.format(self.tests_done))
                         time.sleep(np.random.randint(2))
                         self.launch_stim()
