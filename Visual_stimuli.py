@@ -54,6 +54,8 @@ def loomer(wnd, params, screenMs):
         # Cut of radii that exceed user selected value
         radii[np.where(radii>int(params['max radius']))] = int(params['max radius'])
 
+        # TODO find a way to make the loom last a pre-determined ammount of time
+
     else:
         raise Warning('Couldnt compute loom parameters')
 

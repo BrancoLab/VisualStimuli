@@ -30,6 +30,7 @@ class Main_UI(QWidget):
             sys._excepthook(exctype, value, traceback)
             sys.exit(1)
         sys.excepthook = exception_hook
+
         # ==============================================================================
         # ==============================================================================
         # Load parameters from config file
@@ -37,12 +38,34 @@ class Main_UI(QWidget):
         self.settings = load_yaml(config_path)
 
         # Initialise variables
+        self.initialise_variables()
+
+        # ==============================================================================
+        # START MULTITHREDING - create a thread to handle psychopy stuff in parallel to gui thread
+        self.threadpool = QThreadPool()
+        print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
+
+        main_loop_worker = Worker(self.main_loop)
+        self.threadpool.start(main_loop_worker)  # Now the mainloop will keep goin
+
+        # Create GUI UI
+        self.create_widgets()
+        self.define_layout()
+        self.define_style_sheet()
+
+        # Load parameters YAML files
+        self.get_stims_yaml_files_from_folder()
+
+    def initialise_variables(self):
+        # Flag to signal when app is ready to launch a stim
         self.ready = False
 
+        # Dictionary of preparred stimuli and name of thr currently displayed stimulus
         self.prepared_stimuli = {}
         self.current_stim_params_displayed = ''
-        self.ignored_params = ['name', 'units', 'type', 'modality', 'Stim type']  # Stim parameters with these will not be displayed
-        # in the gui, they will have to be edited in the yaml files
+
+        # Stim parameters that should not be desplayed in the GUI [by name]
+        self.ignored_params = ['name', 'units', 'type', 'modality', 'Stim type']
 
         # Flags to handle stim generation
         """
@@ -53,27 +76,34 @@ class Main_UI(QWidget):
         """
         self.stim_on = False
         self.stim, self.stim_frames, self.stim_frame_number = None, False, False
+
+
+        # Keep track of how long it takes to draw on the psyspy window
         self.last_draw, self.draws = 0, []
-        self.square, self.square_pos = None, (0, 0)  # Reference to psychopy rectangle to be drawn above light dependant resistor
-        # ==============================================================================
-        # START MULTITHREDING
-        self.threadpool = QThreadPool()
-        print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-        # Call Main Loop - on a separate thread
-        # Start a thread that continously checks the parameters and refreshes the window
-        main_loop_worker = Worker(self.main_loop)
-        self.threadpool.start(main_loop_worker)
+        # Flags to handle generation of "signal" square
+        """
+        A square can be drawn in a corner of the scren (above a LDR, light dependant resistor). The color changes
+        when a stim is on so that stim onset and duration can be recorded with ms accuracy
+        -square: reference to the square object
+        - position: position on the screen (in cm)
+        """
+        self.square, self.square_pos = None, (0, 0)
 
-        # Create GUI UI
-        self.create_widgets()
-        self.define_layout()
-        self.define_style_sheet()
 
-        # Load parameters YAML files
-        self.get_stims_yaml_files_from_folder()
+        # Flags to control benchmarking (testing the GUI stimulus geneartion)
+        """
+        - benchmarking: has the benchmarking button been pressed
+        -stim duration: keep track of how long each stimulus lasted for
+        - draw speed: keep track of how long it took to draw each frame of the stimulus
+        - test_done: keep track of how many stimuli have been delivered during the test
+        - max_test: number of stimuli to deliver as part of the test
+        """
+        self.benchmarking = False
+        self.stim_duration, self.draw_speed = [], []
+        self.test_done, self.max_tests = 0, 5
 
-    ####################################################################################################################
+####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
     ####################################################################################################################
 
@@ -140,7 +170,7 @@ class Main_UI(QWidget):
 
         # Benchmark btn
         self.bench_btn = QPushButton(text='Bench Mark')
-        self.bench_btn.clicked.connect(self.nofunc)
+        self.bench_btn.clicked.connect(self.launch_benchmark)
 
     def define_layout(self):
         # Status label
@@ -338,6 +368,9 @@ class Main_UI(QWidget):
                                           fullscr=self.settings['fullscreen'], units=self.settings['unit'])
         self.screenMs, _, _ = self.psypy_window.getMsPerFrame()
 
+        if abs(self.screenMs - 16)>5:
+            a = 1
+
         # Get position of the square stimulus [if on]
         if self.settings['square on']:
             self.square_pos = get_position_in_px(self.psypy_window, self.settings['square pos'],
@@ -466,20 +499,33 @@ class Main_UI(QWidget):
                 print('     ... Last stim draw was {}ms ago\n        ... From stim creation to last draw: {}'.
                       format((time.clock()-self.last_draw)*1000, (self.last_draw - self.stim_timer)*1000))
                 self.draws = np.array(self.draws)[1:-1]
-                print('Avg time between draws: {}, std {}'.format(np.mean(self.draws), np.std(self.draws)))
+
+                avg_draw, std_draw = np.mean(self.draws), np.std(self.draws)
+                print('Avg time between draws: {}, std {}'.format(avg_draw, std_draw))
+
                 self.draws = []
                 # Print for how long the stimulus has been on
                 elapsed = time.clock() - self.stim_timer
                 print('     ... stim duration: {}'.format(elapsed * 1000))
 
+
+
                 # Get for how long the stimulus should be left on, and time it
+                slept = 0
                 try:
                     params = self.prepared_stimuli[self.current_stim_params_displayed]
                     ontimer = time.clock()
                     time.sleep(int(int(params['on_time'])/1000))
-                    print('     ... ON time {}'.format((time.clock()-ontimer)*1000))
+                    slept = time.clock()-ontimer
+                    print('     ... ON time {}'.format(slept*1000))
                 except:
                     pass
+
+                if self.benchmarking:
+                    self.stim_duration.append((elapsed, slept))
+                    self.draw_speed.append((avg_draw, std_draw))
+                    self.test_done += 1
+
 
                 # After everything is done, clean up
                 self.stim = None
@@ -679,6 +725,8 @@ class Main_UI(QWidget):
                 params = self.prepared_stimuli[self.current_stim_params_displayed]
                 self.stim_frames = stim_calculator(self.psypy_window, params, self.screenMs)
 
+    def launch_benchmark(self):
+        self.benchmarking = True
 
     ####################################################################################################################
     """    MAIN LOOP  """
@@ -699,8 +747,17 @@ class Main_UI(QWidget):
         # Update status label
         self.update_status_label()
 
-        while True:  # Keep loopingnin synch with the screen refresh rate, check the params and update stuff
-            # print(time.clock())
+        while True:  # Keep loopingn in synch with the screen refresh rate, check the params and update stuff
+            if self.benchmarking:
+                if self.ready == 'Ready':
+                    if self.test_done >= self.max_tests:
+                        self.benchmarking = False
+                        self.test_results()
+                    else:
+                        print('\nTest {}'.format(self.test_done))
+                        time.sleep(np.random.randint(5))
+                        self.launch_stim()
+
             # Update parameters
             if self.ready == 'Ready':
                 self.read_from_params_widgets()
@@ -718,7 +775,7 @@ class Main_UI(QWidget):
 
                 if self.stim is not None:
                     self.stim.draw()
-                    print('     ... time between draws: {}'.format((time.clock()-self.last_draw)*1000))
+                    # print('     ... time between draws: {}'.format((time.clock()-self.last_draw)*1000))
                     self.draws.append((time.clock()-self.last_draw)*1000)
                     self.last_draw = time.clock()
 
@@ -732,6 +789,19 @@ class Main_UI(QWidget):
     def nofunc(self):
         # Decoy function to set up empty buttons during GUI design
         pass
+
+    def test_results(self):
+        import matplotlib.pyplot as plt
+
+        plt.figure()
+        plt.plot([x[0] for x in self.stim_duration])
+        plt.plot([x[1] for x in self.stim_duration])
+
+        plt.figure()
+        plt.plot([x[0] for x in self.draw_speed])
+        plt.plot([x[1] for x in self.draw_speed])
+
+        plt.show()
 
 ####################################################################################################################
 ####################################################################################################################
