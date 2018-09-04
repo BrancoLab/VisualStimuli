@@ -1,8 +1,10 @@
 # DEFINE THE MONITOR
-Name: 'Projector LF'  # Name of the monitor
-PxSize: 1920, 1080 # Size of the monitor in pixel
-Width: 80            # Width of the monitor in cm
-Distance: 60         # Distance from the mouse
+Name: 'Dell_P2715Q'  # Name of the yml file with the specs of the monitor being used
+
+# Define parameters of the GUI window
+position: 4000, 50  # Position of top left corner on main screen, in px
+width: 1000       # Width of the window in px
+height: 800       # Height of the window in px
 
 # DEFINE PSYCHOPY WINDOW
 wnd_PxSize: 2400, 1200 # Size of the window in px

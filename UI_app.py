@@ -78,7 +78,6 @@ class Main_UI(QWidget):
         self.stim_on = False
         self.stim, self.stim_frames, self.stim_frame_number = None, False, False
 
-
         # Keep track of how long it takes to draw on the psyspy window
         self.last_draw, self.draws = 0, []
 
@@ -91,7 +90,6 @@ class Main_UI(QWidget):
         """
         self.square, self.square_pos = None, (0, 0)
 
-
         # Flags to control benchmarking (testing the GUI stimulus geneartion)
         """
         - benchmarking: has the benchmarking button been pressed
@@ -100,12 +98,12 @@ class Main_UI(QWidget):
         - number_of_tests: number of stimuli to deliver as part of the test
         """
         self.benchmarking = False
-        self.benchmark_results = {'Stim duration':[],
-                                  'Draw duration avg':[],
-                                  'Draw duration std':[],
-                                  'On time duration':[],
-                                  'Number frames per stim':[]}
-        self.tests_done, self.number_of_tests = 0, 100
+        self.benchmark_results = {'Stim duration': [],
+                                  'Draw duration avg': [],
+                                  'Draw duration std': [],
+                                  'On time duration': [],
+                                  'Number frames per stim': []}
+        self.tests_done, self.number_of_tests = 0, 50
 
 ####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -235,13 +233,13 @@ class Main_UI(QWidget):
         # Finalise layout
         self.setLayout(self.grid)
         self.setContentsMargins(50, 10, 10, 25)
-        self.setGeometry(0, 0, 1000, 800)
+        self.setGeometry(int(self.settings['position'].split(', ')[0]), int(self.settings['position'].split(', ')[1]),
+                         int(self.settings['width']), int(self.settings['height']))
         self.setWindowTitle('Review')
 
         # Benchamrk btn
         self.grid.addWidget(self.bench_btn, 15, 0, 1 ,4)
         self.bench_btn.setObjectName('BennchBtn')
-
 
         self.show()
 
