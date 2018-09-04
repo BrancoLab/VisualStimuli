@@ -421,9 +421,10 @@ class Main_UI(QWidget):
                 pos = self.stim_frames[0]
                 radii = self.stim_frames[1]
 
-                self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
-                                          units=params['units'], pos=pos,
-                                          lineColor='black', fillColor='black')
+                if self.stim is None:
+                    self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
+                                              units=params['units'], pos=pos,
+                                              lineColor='black', fillColor='black')
                 self.stim.radius = radii[self.stim_frame_number]
 
             # Create a GRATING
@@ -434,9 +435,9 @@ class Main_UI(QWidget):
                 ori = self.stim_frames[2]
                 fg_col = self.stim_frames[3]
                 bg_col = self.stim_frames[4]
-
-                self.stim = visual.GratingStim(win=self.psypy_window, size=size, pos=pos, ori=ori, color=fg_col,
-                                               sf=params['spatial frequency'], units=params['units'], interpolate=True)
+                if self.stim is None:
+                    self.stim = visual.GratingStim(win=self.psypy_window, size=size, pos=pos, ori=ori, color=fg_col,
+                                                   sf=params['spatial frequency'], units=params['units'], interpolate=True)
                 self.stim.phase = phases[self.stim_frame_number]
 
         # Create the square for Light Dependant Resistors [change color depending of if other stims are on or not
@@ -445,9 +446,14 @@ class Main_UI(QWidget):
                 col = map_color_scale(self.settings['square default col'])
             else:
                 col = -map_color_scale(self.settings['square default col'])
-            self.square = visual.Rect(self.psypy_window, width=self.settings['square width'],
+
+
+            if self.square is None:
+                self.square = visual.Rect(self.psypy_window, width=self.settings['square width'],
                                       height=self.settings['square width'], pos=self.square_pos, units='cm',
                                       lineColor=[col, col, col], fillColor=[col, col, col])
+            else:
+                self.square.setFillColor([col, col, col])
             self.square.draw()
 
     def stim_manager(self):
@@ -537,7 +543,7 @@ class Main_UI(QWidget):
                 # Update status label
                 self.update_status_label()
 
-                print('     ... stim disappeared after {}'.format((time.clock()-self.stim_timer)*1000))
+                print('     ... stim disappeared after {}\n'.format((time.clock()-self.stim_timer)*1000))
         else:
             # Call stim creator anyway so that we can update the color of the LDR sqare if one is present
             self.stim_creator()
@@ -778,7 +784,6 @@ class Main_UI(QWidget):
 
                 if self.stim is not None:
                     self.stim.draw()
-                    # print('     ... time between draws: {}'.format((time.clock()-self.last_draw)*1000))
                     self.draws.append((time.clock()-self.last_draw)*1000)
                     self.last_draw = time.clock()
 
