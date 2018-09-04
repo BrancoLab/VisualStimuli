@@ -48,7 +48,7 @@ def plot_benchmark_results(results):
         frame.set_facecolor([0.1, 0.1, 0.1])
 
     # Save results in case somthing crashes
-    timestamp = datetime.datetime.today().strftime('%d%b%Y_%h%m')
+    timestamp = datetime.datetime.today().strftime('%d%b%Y_%H%M')
     name = results['Stim name'].split('.')[0]+'_'+results['Monitor name']+'_'+timestamp
     f.savefig(".\\Tests Results\\{}.png".format(name))
 

@@ -407,7 +407,9 @@ class Main_UI(QWidget):
             lum = int(lum)
         # update the window color
         lum = map_color_scale(lum)
-        self.psypy_window.setColor([lum, lum, lum])
+        prev_lum = self.psypy_window.color[0]
+        if not prev_lum == lum:  # only update the background color if we actually changed it
+            self.psypy_window.setColor([lum, lum, lum])
 
     def stim_creator(self):
         """
