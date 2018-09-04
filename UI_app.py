@@ -356,7 +356,7 @@ class Main_UI(QWidget):
         print('First psychopy import took: {}'.format((time.clock()-t)*1000))
 
         # Create monitor object
-        mon = monitor_def(self.settings)
+        monitor, screen_number = monitor_def(self.settings)
 
         # Get params to create a window from settings
         size = self.settings['wnd_PxSize']  # Get size from the settings (specified in GUI_cfg.yml
@@ -370,7 +370,8 @@ class Main_UI(QWidget):
             str(int(map_color_scale(col, reversed=True))))  # Update the BG color widget
 
         # Create a window, get mseconds per screen refresh
-        self.psypy_window = visual.Window([int(size[0]), int(size[1])], monitor=mon, color=[col, col, col],
+        self.psypy_window = visual.Window([int(size[0]), int(size[1])], monitor=monitor, color=[col, col, col],
+                                          screen=screen_number,
                                           fullscr=self.settings['fullscreen'], units=self.settings['unit'])
         avg, std, self.screenMs = self.psypy_window.getMsPerFrame(showVisual=True, msg='Testing refresh rate')
 
@@ -392,7 +393,7 @@ class Main_UI(QWidget):
             with size: {}
         Using monitor: {}\n
         mS per frame: {} std {}\n
-        '''.format(self.psypy_window.name, self.psypy_window.size, mon.name, self.screenMs, std))
+        '''.format(self.psypy_window.name, self.psypy_window.size, monitor.name, self.screenMs, std))
         print('\n========================================')
 
     def change_bg_lum(self):

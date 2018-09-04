@@ -166,7 +166,7 @@ def monitor_def(settings):
     my_monitor.setWidth(int(screen_params['Width']))
     my_monitor.setDistance(int(screen_params['Distance']))
     my_monitor.saveMon()
-    return my_monitor
+    return my_monitor, screen_params['Screen number']
 
 
 def map_color_scale(value, leftMin=0, leftMax=255, rightMin=-1, rightMax=1, reversed=False):
