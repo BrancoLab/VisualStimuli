@@ -98,12 +98,15 @@ class Main_UI(QWidget):
         - number_of_tests: number of stimuli to deliver as part of the test
         """
         self.benchmarking = False
-        self.benchmark_results = {'Stim duration': [],
+        self.benchmark_results = {'Stim name': None,
+                                  'Monitor name': None,
+                                  'Stim duration': [],
                                   'Draw duration avg': [],
                                   'Draw duration std': [],
                                   'On time duration': [],
-                                  'Number frames per stim': []}
-        self.tests_done, self.number_of_tests = 0, 50
+                                  'Number frames per stim': [],
+                                  'Number dropped frames': []}
+        self.tests_done, self.number_of_tests = 0, 3
 
 ####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -474,7 +477,6 @@ class Main_UI(QWidget):
             if not self.stim_frame_number:
                 self.psypy_window.recordFrameIntervals = True  # Record if we drop frames during stim generation
 
-
                 self.ready = 'Busy'
                 # Update status label
                 self.update_status_label()
@@ -498,7 +500,7 @@ class Main_UI(QWidget):
             if self.stim_frame_number == len(self.stim_frames[-1]):  # the last elemnt in stim frames is as long as the duration of the stim
                 # We reached the end of the stim frames, keep the stim on for a number of ms and then clean up
                 # Print time to last draw and from first draw to last
-                print('     ... Last stim draw was {}ms ago\n        ... From stim creation to last draw: {}'.
+                print('     ... Last stim draw was {}ms ago\n    ... From stim creation to last draw: {}'.
                       format((time.clock()-self.last_draw)*1000, (self.last_draw - self.stim_timer)*1000))
                 self.draws = np.array(self.draws)[1:-1]
 
@@ -524,6 +526,9 @@ class Main_UI(QWidget):
                 if self.benchmarking:
                     # Store results
                     print('----->>> {} frames where dropped'.format(self.psypy_window.nDroppedFrames))
+                    self.benchmark_results['Stim name'] = self.current_stim_params_displayed
+                    self.benchmark_results['Monitor name'] = self.psypy_window.monitor.name
+                    self.benchmark_results['Number dropped frames'].append(self.psypy_window.nDroppedFrames)
                     self.benchmark_results['Ms per frame'] = self.screenMs
                     self.benchmark_results['Stim duration'].append(elapsed)
                     self.benchmark_results['On time duration'].append(slept)
@@ -757,7 +762,9 @@ class Main_UI(QWidget):
                     if self.tests_done >= self.number_of_tests:
                         self.benchmarking = False
                         self.stim_on = False
-                        plot_benchmark_results(self.benchmark_results)
+                        plotting_worker = Worker(plot_benchmark_results, self.benchmark_results)
+                        self.threadpool.start(plotting_worker)  # Now the mainloop will keep goin
+
                     else:
                         self.stim_on = False
                         self.stim_creator()

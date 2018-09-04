@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib
+import datetime
 
 matplotlib.rc('axes',edgecolor=[0.8, 0.8, 0.8])
 matplotlib.rcParams['text.color'] = [0.8, 0.8, 0.8]
@@ -24,9 +25,10 @@ def plot_benchmark_results(results):
     axarr[0].plot([x*results['Ms per frame'] for x in results['Number frames per stim']],
                   color=[0.75, 0.75, 0.75], label='Calculated duration')
 
-    axarr[1].set(title='Frame draw duration avg and std per stimulus (ms)', ylim=[0, 20])
+    axarr[1].set(title='Frame draw duration avg and std per stimulus (ms)', ylim=[0, 40])
     axarr[1].plot(results['Draw duration avg'], color='green', label='Draw duration avg')
-    axarr[1].plot(results['Draw duration std'], color=[0.4, 0.4, 0.8], label='Draw duration std')
+    axarr[1].plot(results['Draw duration std'], color='blue', label='Draw duration std')
+    axarr[1].plot(results['Number dropped frames'], color='red', label='Dropped')
     axarr[1].axhline(results['Ms per frame'], color=[.6, .6, .6], label='Ms per frame')
 
     axarr[2].set(title='Stim ON duration (ms)', ylim=[950, 1050])
@@ -36,6 +38,11 @@ def plot_benchmark_results(results):
         legend = ax.legend(frameon=True)
         frame = legend.get_frame()
         frame.set_facecolor([0.1, 0.1, 0.1])
+
+    # Save results in case somthing crashes
+    timestamp = datetime.datetime.today().strftime('%d%b%Y_%h%m')
+    name = results['Stim name'].split('.')[0]+'_'+results['Monitor name']+'_'+timestamp
+    f.savefig(".\\Tests Results\\{}.png".format(name))
 
     plt.show()
 
