@@ -108,7 +108,7 @@ class Main_UI(QWidget):
                                   'On time duration': [],
                                   'Number frames per stim': [],
                                   'Number dropped frames': []}
-        self.tests_done, self.number_of_tests = 0, 5
+        self.tests_done, self.number_of_tests = 0, 200
 
 ####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -441,7 +441,6 @@ class Main_UI(QWidget):
                 phases = self.stim_frames[-1]
                 ori = self.stim_frames[2]
                 fg_col = self.stim_frames[3]
-                bg_col = self.stim_frames[4]
                 if self.stim is None:
                     self.stim = visual.GratingStim(win=self.psypy_window, size=size, pos=pos, ori=ori, color=fg_col,
                                                    sf=params['spatial frequency'], units=params['units'], interpolate=True)
@@ -459,7 +458,7 @@ class Main_UI(QWidget):
                 self.square = visual.Rect(self.psypy_window, width=self.settings['square width'],
                                       height=self.settings['square width'], pos=self.square_pos, units='cm',
                                       lineColor=[col, col, col], fillColor=[col, col, col])
-            else:
+            elif self.square.fillColor[0] != col:
                 self.square.setFillColor([col, col, col])
             self.square.draw()
 
@@ -776,9 +775,9 @@ class Main_UI(QWidget):
                         self.threadpool.start(plotting_worker)  # Now the mainloop will keep goin
 
                     else:
-                        self.stim_on = False
-                        self.stim_creator()
-                        self.psypy_window.flip()
+                        # self.stim_on = False
+                        # self.stim_creator()
+                        # self.psypy_window.flip()
 
                         print('\nTest {}'.format(self.tests_done))
                         time.sleep(np.random.randint(2))
