@@ -26,7 +26,7 @@ def plot_benchmark_results(results):
     axarr[0].plot([x*results['Ms per frame'] for x in results['Number frames per stim']],
                   color=[0.75, 0.75, 0.75], label='Calculated duration')
 
-    axarr[1].set(title='Frame draw duration individual frames (ms)', ylim=[0, 40])
+    axarr[1].set(title='Frame draw duration individual frames (ms)', ylim=[0, np.max(results['Draw duration all'])+5])
     xx = [np.ones(len(x))*idx for idx,x in enumerate(results['Draw duration all'])]
 
     for num in range(len(xx)):
