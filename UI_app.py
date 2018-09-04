@@ -102,12 +102,13 @@ class Main_UI(QWidget):
                                   'Monitor name': None,
                                   'Stim duration': [],
                                   'Draw duration all': [],
+                                  'Draw duration all auto': [],
                                   'Draw duration avg': [],
                                   'Draw duration std': [],
                                   'On time duration': [],
                                   'Number frames per stim': [],
                                   'Number dropped frames': []}
-        self.tests_done, self.number_of_tests = 0, 30
+        self.tests_done, self.number_of_tests = 0, 5
 
 ####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -536,6 +537,8 @@ class Main_UI(QWidget):
                     self.benchmark_results['Stim duration'].append(elapsed)
                     self.benchmark_results['On time duration'].append(slept)
                     self.benchmark_results['Draw duration all'].append(all_draws)
+                    self.benchmark_results['Draw duration all auto'].append(self.psypy_window.frameIntervals)
+                    self.psypy_window.frameIntervals = []
                     self.benchmark_results['Draw duration avg'].append(avg_draw)
                     self.benchmark_results['Draw duration std'].append(std_draw)
                     self.benchmark_results['Number frames per stim'].append(len(self.stim_frames[-1])-1)
