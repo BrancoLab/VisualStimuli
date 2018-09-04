@@ -146,15 +146,24 @@ def get_list_widget_items(list_wdg):
 
 
 def monitor_def(settings):
-    my_monitor = monitors.Monitor(name=settings['Name'])
-    size = settings['PxSize']
+    print('Setting up monitor')
+    filename =settings['Name']
+    for f in os.listdir(".\\Screens"):
+        if filename == f.split('.')[0]:
+            setupfile = f
+            break
+
+    screen_params = load_yaml(".\\Screens\\{}".format(setupfile))
+
+    my_monitor = monitors.Monitor(screen_params['Name'])
+    size = screen_params['PxSize']
     try:
         my_monitor.setSizePix((int(size.split(', ')[0]), int(size.split(', ')[1])))
     except:
         my_monitor.setSizePix((int(size.split(',')[0]), int(size.split(',')[1])))
 
-    my_monitor.setWidth(int(settings['Width']))
-    my_monitor.setDistance(int(settings['Distance']))
+    my_monitor.setWidth(int(screen_params['Width']))
+    my_monitor.setDistance(int(screen_params['Distance']))
     my_monitor.saveMon()
     return my_monitor
 
