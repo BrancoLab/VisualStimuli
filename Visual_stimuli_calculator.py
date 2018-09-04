@@ -22,7 +22,7 @@ def loomer(wnd, params, screenMs):
 
     # Prepare radii steps
     if params['modality'] == 'linear':
-        numExpSteps = np.ceil(int(params['expand_time']) / screenMs)
+        numExpSteps = np.ceil(int(params['expand_time']) / screenMs) +1
 
         radii = np.linspace(float(params['start_size']),
                             float(params['end_size']), numExpSteps)

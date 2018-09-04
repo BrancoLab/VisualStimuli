@@ -13,8 +13,6 @@ params = {'legend.fontsize': 12,
           'legend.handlelength': 1}
 plt.rcParams.update(params)
 
-
-
 def plot_benchmark_results(results):
     f, axarr = plt.subplots(5, 1, facecolor=[0.1, 0.1, 0.1])
     f.tight_layout()

@@ -1,14 +1,13 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-import traceback, sys
-import os
-import yaml
+
+from App_funcs import *
+from App_Main import App_control
+
 
 ####################################################################################################################
 """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
-
-
 ####################################################################################################################
 
 def create_widgets(self):
@@ -23,14 +22,14 @@ def create_widgets(self):
     self.params_files_label = QLabel('Parameter files')
 
     self.param_files_list = QListWidget()
-    self.param_files_list.itemDoubleClicked.connect(self.load_stim_params_from_list_widget)
+    self.param_files_list.itemDoubleClicked.connect(lambda: App_control.load_stim_params_from_list_widget(self))
 
     # Loaded stims
     self.laoded_stims_label = QLabel('Loaded stims')
 
     self.loaded_stims_list = QListWidget()
-    self.loaded_stims_list.currentItemChanged.connect(self.update_params_widgets)
-    self.loaded_stims_list.itemDoubleClicked.connect(self.remove_loaded_stim_from_widget_list)
+    self.loaded_stims_list.currentItemChanged.connect(lambda: App_control.update_params_widgets)
+    self.loaded_stims_list.itemDoubleClicked.connect(App_control.remove_loaded_stim_from_widget_list)
 
     # current open stim
     self.filename_edit = QLineEdit('Params file - not loaded -')
@@ -60,21 +59,21 @@ def create_widgets(self):
 
     # Launch btn
     self.launch_btn = QPushButton(text='Launch')
-    self.launch_btn.clicked.connect(self.launch_stim)
+    self.launch_btn.clicked.connect(lambda: App_control.launch_stim(self))
 
     # Load and save btn
     self.load_btn = QPushButton(text='Load')
-    self.load_btn.clicked.connect(self.load_stim_params_from_list_widget)
+    self.load_btn.clicked.connect(lambda: App_control.load_stim_params_from_list_widget(self))
 
     self.remove_btn = QPushButton(text='Remove')
-    self.remove_btn.clicked.connect(self.remove_loaded_stim_from_widget_list)
+    self.remove_btn.clicked.connect(lambda: App_control.remove_loaded_stim_from_widget_list(self))
 
     self.save_btn = QPushButton(text='Save')
-    self.save_btn.clicked.connect(self.save_params_yaml_file)
+    self.save_btn.clicked.connect(lambda: App_control.save_params_yaml_file(self))
 
     # Benchmark btn
     self.bench_btn = QPushButton(text='Bench Mark')
-    self.bench_btn.clicked.connect(self.launch_benchmark)
+    self.bench_btn.clicked.connect(lambda: App_control.launch_benchmark(self))
 
 
 def define_layout(self):
