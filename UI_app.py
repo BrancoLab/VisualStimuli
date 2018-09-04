@@ -108,7 +108,7 @@ class Main_UI(QWidget):
                                   'On time duration': [],
                                   'Number frames per stim': [],
                                   'Number dropped frames': []}
-        self.tests_done, self.number_of_tests = 0, 200
+        self.tests_done, self.number_of_tests = 0, 100
 
 ####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -458,7 +458,7 @@ class Main_UI(QWidget):
                 self.square = visual.Rect(self.psypy_window, width=self.settings['square width'],
                                       height=self.settings['square width'], pos=self.square_pos, units='cm',
                                       lineColor=[col, col, col], fillColor=[col, col, col])
-            elif self.square.fillColor[0] != col:
+            else:
                 self.square.setFillColor([col, col, col])
             self.square.draw()
 
@@ -501,18 +501,19 @@ class Main_UI(QWidget):
             self.stim_frame_number += 1
 
             if self.stim_frame_number == len(self.stim_frames[-1]):  # the last elemnt in stim frames is as long as the duration of the stim
+                elapsed = time.clock() - self.stim_timer
+
                 # We reached the end of the stim frames, keep the stim on for a number of ms and then clean up
                 # Print time to last draw and from first draw to last
                 print('     ... Last stim draw was {}ms ago\n     ... From stim creation to last draw: {}'.
                       format((time.clock()-self.last_draw)*1000, (self.last_draw - self.stim_timer)*1000))
-                self.draws = np.array(self.draws)[1:-1]
+                self.draws = np.array(self.draws)[1:]
 
                 all_draws, avg_draw, std_draw = self.draws.copy(), np.mean(self.draws), np.std(self.draws)
                 print('     ... avg time between draws: {}, std {}'.format(avg_draw, std_draw))
 
                 self.draws = []
                 # Print for how long the stimulus has been on
-                elapsed = time.clock() - self.stim_timer
                 print('     ... stim duration: {}'.format(elapsed * 1000))
 
                 # Get for how long the stimulus should be left on, and time it
@@ -542,7 +543,6 @@ class Main_UI(QWidget):
                     self.benchmark_results['Draw duration std'].append(std_draw)
                     self.benchmark_results['Number frames per stim'].append(len(self.stim_frames[-1])-1)
                     self.tests_done += 1
-
 
                 # After everything is done, clean up
                 self.stim = None

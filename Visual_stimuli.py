@@ -67,7 +67,7 @@ def grater(wnd, params, screenMs):
     Calculates the data for generating a grating stimulus given some params
     same input as loomer
     """
-    numExpSteps = np.ceil(int(params['duration']) / screenMs)+1
+    numExpSteps = np.ceil(int(params['duration']) / screenMs)+2
     x, y, width, height = get_position_in_px(wnd, 'top left', 0, return_scree_size=True)
     if params['units'] == 'cm':
         pos = (0, 0)
