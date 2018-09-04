@@ -748,6 +748,18 @@ class Main_UI(QWidget):
     def launch_benchmark(self):
         self.benchmarking = True
 
+    def setup_ni_communication(self):
+        import PyDAQmx as nidaq
+
+        with nidaq.Task() as t:
+            t.ao_channels.add_ao_voltage_chan('Dev1/ao0')
+            t.write(5.0)
+            t.CreateAIVoltageChan("Dev1/ai0", None, nidaq.DAQmx_Val_Diff, 0, 10, nidaq.DAQmx_Val_Volts, None)
+            t.CfgSampClkTiming("", 1000, nidaq.DAQmx_Val_Rising, nidaq.DAQmx_Val_FiniteSamps, 5000)
+            t.StartTask()
+
+            t.read
+
     ####################################################################################################################
     """    MAIN LOOP  """
     ####################################################################################################################
