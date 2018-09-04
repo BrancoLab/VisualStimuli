@@ -322,7 +322,6 @@ class Main_UI(QWidget):
     """  NI BOARD functions  """
     ####################################################################################################################
 
-
     def setup_ni_communication(self):
         import PyDAQmx as nidaq
 
@@ -586,7 +585,7 @@ class App_control(Main_UI):
                 yaml.dump(params, outfile, default_flow_style=True)
 
         # Update files list widget
-        get_stims_yaml_files_from_folder(self)()
+        App_control.get_stims_yaml_files_from_folder(self)
 
     # LAUNCH btn function
     @staticmethod
@@ -601,6 +600,7 @@ class App_control(Main_UI):
     @staticmethod
     def launch_benchmark(main):
         main.benchmarking = True
+        main.setup_ni_communication()
 
 
 if __name__ == '__main__':
