@@ -108,7 +108,7 @@ class Main_UI(QWidget):
                                   'On time duration': [],
                                   'Number frames per stim': [],
                                   'Number dropped frames': []}
-        self.tests_done, self.number_of_tests = 0, 100
+        self.tests_done, self.number_of_tests = 0, 500
 
 ####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -453,7 +453,6 @@ class Main_UI(QWidget):
             else:
                 col = -map_color_scale(self.settings['square default col'])
 
-
             if self.square is None:
                 self.square = visual.Rect(self.psypy_window, width=self.settings['square width'],
                                       height=self.settings['square width'], pos=self.square_pos, units='cm',
@@ -569,12 +568,13 @@ class Main_UI(QWidget):
             self.status_label.setStyleSheet('background-color: orange')
         else:
             try:
-                if self.ready == 'Ready':
-                    self.status_label.setText('READY')
-                    self.status_label.setStyleSheet('background-color: green')
-                else:
-                    self.status_label.setText('Busy...')
-                    self.status_label.setStyleSheet('background-color: gray')
+                if not self.benchmarking:
+                    if self.ready == 'Ready':
+                        self.status_label.setText('READY')
+                        self.status_label.setStyleSheet('background-color: green')
+                    else:
+                        self.status_label.setText('Busy...')
+                        self.status_label.setStyleSheet('background-color: gray')
             except:
                 print('Couldnt update status label')
 
@@ -776,8 +776,8 @@ class Main_UI(QWidget):
 
                     else:
                         # self.stim_on = False
-                        # self.stim_creator()
-                        # self.psypy_window.flip()
+                        self.stim_creator()
+                        self.psypy_window.flip()
 
                         print('\nTest {}'.format(self.tests_done))
                         time.sleep(np.random.randint(2))
