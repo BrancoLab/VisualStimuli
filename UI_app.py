@@ -390,10 +390,9 @@ class Main_UI(QWidget):
         print('''
         Initialised Psychopy window: {}
             with size: {}
-                 fps: {}\n
         Using monitor: {}\n
-        mS per frame: {}\n
-        '''.format(self.psypy_window.name, self.psypy_window.size, self.psypy_window.fps(), mon.name, self.screenMs))
+        mS per frame: {} std {}\n
+        '''.format(self.psypy_window.name, self.psypy_window.size, mon.name, self.screenMs, std))
         print('\n========================================')
 
     def change_bg_lum(self):
@@ -564,12 +563,15 @@ class Main_UI(QWidget):
             self.status_label.setText('Loading...')
             self.status_label.setStyleSheet('background-color: orange')
         else:
-            if self.ready == 'Ready':
-                self.status_label.setText('READY')
-                self.status_label.setStyleSheet('background-color: green')
-            else:
-                self.status_label.setText('Busy...')
-                self.status_label.setStyleSheet('background-color: gray')
+            try:
+                if self.ready == 'Ready':
+                    self.status_label.setText('READY')
+                    self.status_label.setStyleSheet('background-color: green')
+                else:
+                    self.status_label.setText('Busy...')
+                    self.status_label.setStyleSheet('background-color: gray')
+            except:
+                print('Couldnt update status label')
 
     def read_from_params_widgets(self):  # <--- !!!
         """

@@ -32,6 +32,7 @@ def plot_benchmark_results(results):
     for num in range(len(xx)):
         axarr[1].scatter(xx[num], results['Draw duration all'][num], alpha=0.5, s=14, facecolor="None",
          edgecolor='red')
+    axarr[1].axhline(results['Ms per frame'], color=[.6, .6, .6], label='Ms per frame')
 
     axarr[2].set(title='Frame draw duration avg and std per stimulus (ms)', ylim=[0, 40])
     axarr[2].plot(results['Draw duration avg'], color='green', label='Draw duration avg')
