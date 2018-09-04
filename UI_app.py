@@ -501,6 +501,8 @@ class Main_UI(QWidget):
             self.stim_frame_number += 1
 
             if self.stim_frame_number == len(self.stim_frames[-1]):  # the last elemnt in stim frames is as long as the duration of the stim
+                if self.benchmarking:
+                    self.psypy_window.flip()
                 elapsed = time.clock() - self.stim_timer
 
                 # We reached the end of the stim frames, keep the stim on for a number of ms and then clean up
