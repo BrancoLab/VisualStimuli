@@ -348,7 +348,7 @@ class Main_UI(QWidget):
 
     def start_psychopy(self):
         t = time.clock()
-        from psychopy import visual, core  # This needs to be here, it can't be outside the threat the window is created from
+        from psychopy import visual, logging  # This needs to be here, it can't be outside the threat the window is created from
         print('First psychopy import took: {}'.format((time.clock()-t)*1000))
 
         # Create monitor object
@@ -370,8 +370,8 @@ class Main_UI(QWidget):
                                           fullscr=self.settings['fullscreen'], units=self.settings['unit'])
         avg, std, self.screenMs = self.psypy_window.getMsPerFrame(showVisual=True, msg='Testing refresh rate')
 
-        if abs(self.screenMs - 16)>5:
-            a = 1
+        self.psypy_window.refreshThreshold = self.screenMs + 5  # ms per screen + 5 is our threshold for dropped frames
+        logging.console.setLevel(logging.WARNING)
 
         # Get position of the square stimulus [if on]
         if self.settings['square on']:
@@ -466,6 +466,9 @@ class Main_UI(QWidget):
 
             # If stim is just being created, start clock to time its duration
             if not self.stim_frame_number:
+                self.psypy_window.recordFrameIntervals = True  # Record if we drop frames during stim generation
+
+
                 self.ready = 'Busy'
                 # Update status label
                 self.update_status_label()
@@ -514,6 +517,7 @@ class Main_UI(QWidget):
 
                 if self.benchmarking:
                     # Store results
+                    print('----->>> {} frames where dropped'.format(self.psypy_window.nDroppedFrames))
                     self.benchmark_results['Ms per frame'] = self.screenMs
                     self.benchmark_results['Stim duration'].append(elapsed)
                     self.benchmark_results['On time duration'].append(slept)
