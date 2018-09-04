@@ -1,6 +1,6 @@
 # DEFINE THE MONITOR
 Name: 'Projector LF'  # Name of the monitor
 PxSize: 1920, 1080 # Size of the monitor in pixel
-Width: 80            # Width of the monitor in cm
+Width: 70            # Width of the monitor in cm
 Distance: 60         # Distance from the mouse
-Screen number: 1      # Screen number on your coputer
+Screen number: 0      # Screen number on your coputer
