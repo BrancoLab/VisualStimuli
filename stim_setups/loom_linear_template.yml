@@ -7,4 +7,4 @@ expand_time: 500    # duration of expansion in ms
 on_time: 1000       # for how long the stim stays on after it finished expanding
 pos: 0, 0           # position on the screent, in arbitrary unit
 
-units: deg          # stimulus unit
+units: cm          # stimulus unit
