@@ -101,12 +101,13 @@ class Main_UI(QWidget):
         self.benchmark_results = {'Stim name': None,
                                   'Monitor name': None,
                                   'Stim duration': [],
+                                  'Draw duration all': [],
                                   'Draw duration avg': [],
                                   'Draw duration std': [],
                                   'On time duration': [],
                                   'Number frames per stim': [],
                                   'Number dropped frames': []}
-        self.tests_done, self.number_of_tests = 0, 3
+        self.tests_done, self.number_of_tests = 0, 30
 
 ####################################################################################################################
     """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -500,11 +501,11 @@ class Main_UI(QWidget):
             if self.stim_frame_number == len(self.stim_frames[-1]):  # the last elemnt in stim frames is as long as the duration of the stim
                 # We reached the end of the stim frames, keep the stim on for a number of ms and then clean up
                 # Print time to last draw and from first draw to last
-                print('     ... Last stim draw was {}ms ago\n    ... From stim creation to last draw: {}'.
+                print('     ... Last stim draw was {}ms ago\n     ... From stim creation to last draw: {}'.
                       format((time.clock()-self.last_draw)*1000, (self.last_draw - self.stim_timer)*1000))
                 self.draws = np.array(self.draws)[1:-1]
 
-                avg_draw, std_draw = np.mean(self.draws), np.std(self.draws)
+                all_draws, avg_draw, std_draw = self.draws.copy(), np.mean(self.draws), np.std(self.draws)
                 print('     ... avg time between draws: {}, std {}'.format(avg_draw, std_draw))
 
                 self.draws = []
@@ -532,6 +533,7 @@ class Main_UI(QWidget):
                     self.benchmark_results['Ms per frame'] = self.screenMs
                     self.benchmark_results['Stim duration'].append(elapsed)
                     self.benchmark_results['On time duration'].append(slept)
+                    self.benchmark_results['Draw duration all'].append(all_draws)
                     self.benchmark_results['Draw duration avg'].append(avg_draw)
                     self.benchmark_results['Draw duration std'].append(std_draw)
                     self.benchmark_results['Number frames per stim'].append(len(self.stim_frames[-1])-1)
