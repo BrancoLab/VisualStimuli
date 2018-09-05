@@ -15,7 +15,7 @@ plt.rcParams.update(params)
 
 
 def plot_benchmark_results(results):
-    f, axarr = plt.subplots(4, 1, facecolor=[0.1, 0.1, 0.1])
+    f, axarr = plt.subplots(3, 1, facecolor=[0.1, 0.1, 0.1])
     f.tight_layout()
     for idx, ax in enumerate(axarr):
         ax.set(facecolor=[0.2, 0.2, 0.2])
@@ -27,37 +27,22 @@ def plot_benchmark_results(results):
 
 
 
+    results['Draw duration all'] = np.multiply(results['Draw duration all'], 1000)
+    colors = np.linspace(0, 1, len(results['Draw duration all'][0]))
     axarr[1].set(title='Frame draw duration individual frames (ms)', ylim=[0, np.max(results['Draw duration all'])+5])
     xx = [np.ones(len(x))*idx for idx,x in enumerate(results['Draw duration all'])]
-
     for num in range(len(xx)):
-        axarr[1].scatter(xx[num], results['Draw duration all'][num], alpha=0.5, s=14, facecolor="None",
-         edgecolor='red')
+        axarr[1].scatter(xx[num], results['Draw duration all'][num], s=14, c=np.array(colors)[::-1], cmap='gray')
     axarr[1].axhline(results['Ms per frame'], color=[.6, .6, .6], label='Ms per frame')
 
 
-
-
-
-
-    axarr[2].set(title='Frame draw duration individual frames (ms) - by psychopy', ylim=[0, np.max(results['Draw duration all']) + 5])
-    xx = [np.ones(len(x)) * idx for idx, x in enumerate(results['Draw duration all auto'])]
-
-    for num in range(len(xx)):
-        axarr[2].scatter(xx[num], np.array(results['Draw duration all auto'][num])*1000,
-        alpha=0.5, s=14, facecolor="None",
-                         edgecolor='red')
+    axarr[2].set(title='Frame draw duration avg and std per stimulus (ms)', ylim=[0, 40])
+    axarr[2].plot(np.multiply(results['Draw duration avg'], 1000), color='green', linewidth=5,
+                  label='Draw duration avg')
+    axarr[2].plot(np.multiply(results['Draw duration std'], 1000), color=[0.8, 0.5, 0.5], linewidth=5,
+                  label='Draw duration std')
+    axarr[2].plot(results['Number dropped frames'], color='red', linewidth=3, label='Dropped')
     axarr[2].axhline(results['Ms per frame'], color=[.6, .6, .6], label='Ms per frame')
-
-
-
-
-
-    axarr[3].set(title='Frame draw duration avg and std per stimulus (ms)', ylim=[0, 40])
-    axarr[3].plot(results['Draw duration avg'], color='green', label='Draw duration avg')
-    axarr[3].plot(results['Draw duration std'], color='blue', label='Draw duration std')
-    axarr[3].plot(results['Number dropped frames'], color='red', label='Dropped')
-    axarr[3].axhline(results['Ms per frame'], color=[.6, .6, .6], label='Ms per frame')
 
 
     for ax in axarr:
@@ -70,9 +55,15 @@ def plot_benchmark_results(results):
     name = results['Stim name'].split('.')[0]+'_'+results['Monitor name']+'_'+timestamp
     f.savefig(".\\Tests Results\\{}.png".format(name))
 
+    plt.figure()
+    for i in range(len(results['Draw duration all'])):
+        plt.plot(results['Draw duration all'][i])
+
     plt.show()
 
 
     a = 1
+
+
 
 

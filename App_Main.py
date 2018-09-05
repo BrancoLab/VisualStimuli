@@ -102,7 +102,7 @@ class Main_UI(QWidget):
                                   'Draw duration std': [],
                                   'Number frames per stim': [],
                                   'Number dropped frames': []}
-        self.tests_done, self.number_of_tests = 0, 50
+        self.tests_done, self.number_of_tests = 0, 250
 
     ####################################################################################################################
     """  PSYCHOPY functions  """
@@ -171,7 +171,9 @@ class Main_UI(QWidget):
 
     def stim_creator(self):
         """
-        Creates and initialises stimuli, including the LDR square
+        Creates and initialises stimuli, including the LDR square.
+        If the stimuli have been already created, update their properties accordingly (e.g. change radius of expanding
+        loom).
         """
         # Need to import from psychopy here or it gives an error. Takes <<1 ms
         from psychopy import visual
@@ -186,6 +188,7 @@ class Main_UI(QWidget):
                 radii = self.stim_frames[1]
 
                 if self.stim is None:
+                    self.stim_timer = time.clock()  # Time lifespan of the stim
                     self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
                                               units=params['units'], pos=pos,
                                               lineColor='black', fillColor='black')
@@ -198,7 +201,9 @@ class Main_UI(QWidget):
                 phases = self.stim_frames[-1]
                 ori = self.stim_frames[2]
                 fg_col = self.stim_frames[3]
+
                 if self.stim is None:
+                    self.stim_timer = time.clock()  # Time lifespan of the stim
                     self.stim = visual.GratingStim(win=self.psypy_window, size=size, pos=pos, ori=ori, color=fg_col,
                                                    sf=params['spatial frequency'], units=params['units'], interpolate=True)
                 self.stim.phase = phases[self.stim_frame_number]
@@ -230,19 +235,16 @@ class Main_UI(QWidget):
             if isinstance(self.stim_frames, bool):  # if it is we havent generated the stim frames yet
                 # This is due to the fact that the frames are generated in another thread and the
                 # that might have not been done by the time that stim_manager is called in the main loop
+                # Just exit the function to avoid problems
                 return
 
             # If stim is just being created, start clock to time its duration
             if not self.stim_frame_number:
                 self.psypy_window.recordFrameIntervals = True  # Record if we drop frames during stim generation
-
                 self.ready = 'Busy'
                 # Update status label
                 App_control.update_status_label(self)
-
-                self.stim_timer = time.clock()
-                self.stim_creation_timer = time.clock()
-                # Initialise variable to keep track of progress during stim update
+                # Initialise variable to keep track of progress during stim updates
                 self.stim_frame_number = 0
 
             """
@@ -250,29 +252,29 @@ class Main_UI(QWidget):
             It looks like creating a new stim every frame [using stim_creator] results in more consistent time
             between frames
             """
-            # Create the stimulus object
+            # Create or update the stimulus object
             self.stim_creator()
 
             # Keep track of our progress as we update the stim
             self.stim_frame_number += 1
 
             if self.stim_frame_number == len(self.stim_frames[-1]):  # the last elemnt in stim frames is as long as the duration of the stim
-                if self.benchmarking:
-                    self.psypy_window.flip()
-                elapsed = time.clock() - self.stim_timer
+                self.psypy_window.flip()  # Flip here to make sure that last frame lasts as long as the others
 
-                # We reached the end of the stim frames, keep the stim on for a number of ms and then clean up
-                # Print time to last draw and from first draw to last
-                print('     ... Last stim draw was {}ms ago\n     ... From stim creation to last draw: {}'.
-                      format((time.clock()-self.last_draw)*1000, (self.last_draw - self.stim_timer)*1000))
-                self.draws = np.array(self.draws)[1:]
+                # Keep track of stim lifespan
+                elapsed = time.clock() - self.stim_timer
+                print('     ... stim duration: {}'.format(elapsed * 1000))
+
+                # Keep track of time it took to update (draw) each frame
+                self.draws = np.array(self.psypy_window.frameIntervals)
+                print('     ... number of exp frames {}, number of intervals {}'.format(self.stim_frame_number,
+                                                                               len(self.psypy_window.frameIntervals)))
+                self.psypy_window.frameIntervals = []
+                self.psypy_window.recordFrameIntervals = False
 
                 all_draws, avg_draw, std_draw = self.draws.copy(), np.mean(self.draws), np.std(self.draws)
-                print('     ... avg time between draws: {}, std {}'.format(avg_draw, std_draw))
-
+                print('     ... avg time between draws: {}, std {}'.format(avg_draw*1000, std_draw))
                 self.draws = []
-                # Print for how long the stimulus has been on
-                print('     ... stim duration: {}'.format(elapsed * 1000))
 
                 if self.benchmarking:
                     # Store results
@@ -283,11 +285,10 @@ class Main_UI(QWidget):
                     self.benchmark_results['Ms per frame'] = self.screenMs
                     self.benchmark_results['Stim duration'].append(elapsed)
                     self.benchmark_results['Draw duration all'].append(all_draws)
-                    self.benchmark_results['Draw duration all auto'].append(self.psypy_window.frameIntervals)
-                    self.psypy_window.frameIntervals = []
                     self.benchmark_results['Draw duration avg'].append(avg_draw)
                     self.benchmark_results['Draw duration std'].append(std_draw)
-                    self.benchmark_results['Number frames per stim'].append(len(self.stim_frames[-1])-1)
+                    self.benchmark_results['Number frames per stim'].append(len(self.stim_frames[-1]))
+
                     self.tests_done += 1
 
                 # After everything is done, clean up
@@ -300,7 +301,6 @@ class Main_UI(QWidget):
                 # Update status label
                 App_control.update_status_label(self)
 
-                print('     ... stim disappeared after {}\n'.format((time.clock()-self.stim_timer)*1000))
         else:
             # Call stim creator anyway so that we can update the color of the LDR sqare if one is present
             self.stim_creator()
@@ -310,6 +310,10 @@ class Main_UI(QWidget):
     ####################################################################################################################
 
     def setup_ni_communication(self):
+        """
+        Work in progress
+        """
+        """"""
         # import PyDAQmx as nidaq
         #
         # with nidaq.Task() as t:
@@ -320,7 +324,7 @@ class Main_UI(QWidget):
         #     t.StartTask()
         #
         #     t.read
-     pass
+        pass
 
     ####################################################################################################################
     """    MAIN LOOP  """
@@ -338,10 +342,11 @@ class Main_UI(QWidget):
         """
         # Start psychopy window
         self.start_psychopy()
+
         # Update status label
         App_control.update_status_label(self)
 
-        while True:  # Keep loopingn in synch with the screen refresh rate, check the params and update stuff
+        while True:  # Keep looping in sync with the screen refresh rate, check the params and update stuff
             if self.benchmarking:
                 if self.ready == 'Ready':
                     if self.tests_done >= self.number_of_tests:
@@ -351,12 +356,11 @@ class Main_UI(QWidget):
                         self.threadpool.start(plotting_worker)  # Now the mainloop will keep goin
 
                     else:
-                        # self.stim_on = False
+                        # Flip the window to update LDR square
                         self.stim_creator()
                         self.psypy_window.flip()
 
                         print('\nTest {}'.format(self.tests_done))
-                        time.sleep(np.random.randint(2))
                         App_control.launch_stim(self)
 
             # Update parameters
@@ -369,15 +373,13 @@ class Main_UI(QWidget):
             # Generate, update and clean up stimuli
             self.stim_manager()
 
-            # Update psychopy window
+            # Draw stims and update psychopy window
             try:
                 if self.settings['square on'] and self.square is not None:
                     self.square.draw()
 
                 if self.stim is not None:
                     self.stim.draw()
-                    self.draws.append((time.clock()-self.last_draw)*1000)
-                    self.last_draw = time.clock()
 
                 self.psypy_window.flip()
             except:
