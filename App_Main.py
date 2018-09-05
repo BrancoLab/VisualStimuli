@@ -1,11 +1,11 @@
+from PyQt5.QtWidgets import *
 
 import time
-
+import sys
 from benchmark_results_analysis import *
 
-from App_UI import *
-from App_funcs import *
-
+from App_UI import App_layout, App_control
+from Utils import *
 
 ####################################################################################################################
 ####################################################################################################################
@@ -45,9 +45,9 @@ class Main_UI(QWidget):
         self.threadpool.start(main_loop_worker)  # Now the mainloop will keep goin
 
         # Create GUI UI
-        create_widgets(self)
-        define_layout(self)
-        define_style_sheet(self)
+        App_layout.create_widgets(self)
+        App_layout.define_layout(self)
+        App_layout.define_style_sheet(self)
 
         # Load parameters YAML files
         App_control.get_stims_yaml_files_from_folder(self)
@@ -103,7 +103,7 @@ class Main_UI(QWidget):
                                   'On time duration': [],
                                   'Number frames per stim': [],
                                   'Number dropped frames': []}
-        self.tests_done, self.number_of_tests = 0, 10
+        self.tests_done, self.number_of_tests = 0, 5000
 
     ####################################################################################################################
     """  PSYCHOPY functions  """
@@ -323,16 +323,17 @@ class Main_UI(QWidget):
     ####################################################################################################################
 
     def setup_ni_communication(self):
-        import PyDAQmx as nidaq
-
-        with nidaq.Task() as t:
-            t.ao_channels.add_ao_voltage_chan('Dev1/ao0')
-            t.write(5.0)
-            t.CreateAIVoltageChan("Dev1/ai0", None, nidaq.DAQmx_Val_Diff, 0, 10, nidaq.DAQmx_Val_Volts, None)
-            t.CfgSampClkTiming("", 1000, nidaq.DAQmx_Val_Rising, nidaq.DAQmx_Val_FiniteSamps, 5000)
-            t.StartTask()
-
-            t.read
+        # import PyDAQmx as nidaq
+        #
+        # with nidaq.Task() as t:
+        #     t.ao_channels.add_ao_voltage_chan('Dev1/ao0')
+        #     t.write(5.0)
+        #     t.CreateAIVoltageChan("Dev1/ai0", None, nidaq.DAQmx_Val_Diff, 0, 10, nidaq.DAQmx_Val_Volts, None)
+        #     t.CfgSampClkTiming("", 1000, nidaq.DAQmx_Val_Rising, nidaq.DAQmx_Val_FiniteSamps, 5000)
+        #     t.StartTask()
+        #
+        #     t.read
+     pass
 
     ####################################################################################################################
     """    MAIN LOOP  """
@@ -399,208 +400,6 @@ class Main_UI(QWidget):
 ####################################################################################################################
 ####################################################################################################################
 ####################################################################################################################
-
-
-class App_control(Main_UI):
-    """
-    Set of functions that contro (mainly) the behaviour of the widgets of Main_UI.
-    They are placed in this sub class as static methots and passed Main_UI as param
-    Main to separate all of these function from main body of code, to make it easier to work on them
-    separately
-
-    """
-    # PARAMS and WIDGETS
-    @staticmethod
-    def update_status_label(main):
-        if not main.ready:
-            main.status_label.setText('Loading...')
-            main.status_label.setStyleSheet('background-color: orange')
-        else:
-            try:
-                if not main.benchmarking:
-                    if main.ready == 'Ready':
-                        main.status_label.setText('READY')
-                        main.status_label.setStyleSheet('background-color: green')
-                    else:
-                        main.status_label.setText('Busy...')
-                        main.status_label.setStyleSheet('background-color: gray')
-            except:
-                print('Couldnt update status label')
-
-    @staticmethod
-    def read_from_params_widgets(main):
-        """
-        Loops over the params widgets and reads their values.
-        Stores the values in the dictionary of the currently displayed stimulus
-        :return:
-        """
-        for param_name, param in main.params_widgets_dict.items():
-            if param_name == 'Background Luminosity':
-                main.bg_luminosity = get_param_val(param, string=True)
-
-            elif param_name == 'Delay':
-                main.stim_delay = get_param_val(param)
-
-            else:
-                if not main.current_stim_params_displayed is None:
-                    label = get_param_label(param)
-                    value = get_param_val(param, string=True)
-                    if len(label) > 1 and main.current_stim_params_displayed:
-                        main.prepared_stimuli[main.current_stim_params_displayed][label] = value
-
-    @staticmethod
-    def update_params_widgets(main, stim_name):
-        """ Takes the parameters form one of the loaded stims [in the list widget] and updates the widgets to display
-        the parameters values"""
-        try:
-            if not isinstance(stim_name, str):
-                # if the function has been called by clicking on an item of the list widget "stim_name" will
-                # be a handle to the event not to the item being clicked so we need to extract the name
-                stim_name = stim_name.text()
-
-            # Get the parameters for the selected stim
-            if not stim_name in main.prepared_stimuli.keys():
-                return
-            params = main.prepared_stimuli[stim_name]
-
-            # Keep track of which is the stimulus we are currently displaying
-            main.current_stim_params_displayed = stim_name
-
-            # Update params file name entry
-            main.filename_edit.setText(stim_name)
-
-            # Update stim type parameter widgets
-            list(main.params_widgets_dict['Stim Type'].values())[0][0].setText('Stim type')
-            list(main.params_widgets_dict['Stim Type'].values())[0][1].setText(params['type'])
-
-            # Update the other parameters widgets
-            params_names = sorted(params.keys())
-            params_names = [x for x in params_names if x not in main.ignored_params]  # Don't display all parameters
-            assigned = 0  # Keep track of how many parameters have been assigned to a widget
-            for pnum in sorted(main.params_widgets_dict.keys()):
-                if 'Param' in pnum:
-                    label = get_param_label(main.params_widgets_dict[pnum], object=True)
-                    value = get_param_val(main.params_widgets_dict[pnum], object=True)
-
-                    if assigned >= len(params_names):
-                        # Additional widgets should be empty
-                        label.setText('')
-                        value.setText(str(''))
-                    else:
-                        # Set the widgets texts
-                        par = params_names[assigned]
-                        label.setText(par)
-                        value.setText(str(params[par]))
-                    assigned += 1
-
-            if assigned < len(params_names):  # Too many params to display for the number of widgets in the GUI
-                print(' Couldnt display all params, need more widgets')
-        except:
-            print('Couldnt load parameters from file {}'.format(stim_name))
-
-    @staticmethod
-    def load_stim_params_from_list_widget(main):
-        """
-        Get the selected file in the widget list of .yaml files and loads the data from it, then calls other
-        functions to update class data and GUI widgets
-        """
-        if main.param_files_list.currentItem().text():
-            # Get correct path to file
-            file = main.param_files_list.currentItem().text()
-            file_long = os.path.join(main.settings['stim_configs'], file)
-
-            main.prepared_stimuli[file] = load_yaml(file_long)  # Load parameters from YAML files
-            App_control.update_params_widgets(main, file)  # Update the widgets with new paramaters
-            main.loaded_stims_list.addItem(file)  # Add the file to the widget list
-            main.current_stim_params_displayed = file  # Set the currently displayed stim accordingly
-
-    def remove_loaded_stim_from_widget_list(self):
-        self.ready = 'Busy'
-        try:
-            if self.loaded_stims_list.count() >= 1:
-                # Remove item from loaded stims dictionary
-                if self.loaded_stims_list.currentItem() is None:
-                    return
-
-                sel = self.loaded_stims_list.currentItem().text()
-                if sel in self.prepared_stimuli.keys():
-                    del self.prepared_stimuli[sel]
-
-                # Clean up widgets
-                for param, wdgets in self.params_widgets_dict.items():
-                    if param not in ['Background Luminosity', 'Delay']:
-                        label = get_param_label(wdgets, object=True)
-                        value = get_param_val(wdgets, object=True)
-                        label.setText('')
-                        value.setText('')
-
-                # Remove item from list widget
-                qIndex = self.loaded_stims_list.indexFromItem(self.loaded_stims_list.selectedItems()[0])
-                if qIndex.row() > 0:
-                    self.loaded_stims_list.model().removeRow(qIndex.row())
-                    # Display the params of the item above in the list if there is any
-                    items = get_list_widget_items(self.loaded_stims_list)  # items already in the list widget
-                    if items:
-                        # Load from the first item in the list
-                        update_params_widgets(self, items[0])
-                else:
-                    self.loaded_stims_list.item(0).setText('deleted stim')
-                    # I think that this is where the bug is
-                    self.filename_edit.setText('No stim loaded')
-                    self.current_stim_params_displayed = None
-
-        except:
-            raise Warning('Something went wrong...')
-
-        self.ready = 'Ready'
-
-    # FILES handling
-    @staticmethod
-    def get_stims_yaml_files_from_folder(main):
-        # Get all YAML files in the folder
-        files_folder = main.settings['stim_configs']
-        params_files = get_files(files_folder)
-
-        # Get list of files already in list widget
-        files_in_list = get_list_widget_items(main.param_files_list)
-
-        # If we loaded new files add them to the widget
-        for short in sorted(params_files.keys()):
-            if not short.split in files_in_list:
-                main.param_files_list.addItem(short)
-
-    def save_params_yaml_file(self):
-        # Save file
-        if self.current_stim_params_displayed and self.prepared_stimuli:
-            params = self.prepared_stimuli[self.current_stim_params_displayed]
-            fname = self.filename_edit.text()
-            path = self.settings['stim_configs']
-
-            if fname in self.prepared_stimuli.keys():
-                print('Trying to overwrite a parameters file !!!! <---------')
-                # TODO handle this better ?
-
-            print('Saving parameters to: {}'.format(os.path.join(path, fname)))
-            with open(os.path.join(path, fname), 'w') as outfile:
-                yaml.dump(params, outfile, default_flow_style=True)
-
-        # Update files list widget
-        App_control.get_stims_yaml_files_from_folder(self)
-
-    # LAUNCH btn function
-    @staticmethod
-    def launch_stim(main):
-        if main.ready == 'Ready':
-            if main.current_stim_params_displayed:
-                main.stim_on = True
-                # get params and call stim generator to calculate stim frames
-                params = main.prepared_stimuli[main.current_stim_params_displayed]
-                main.stim_frames = stim_calculator(main.psypy_window, params, main.screenMs)
-
-    @staticmethod
-    def launch_benchmark(main):
-        main.benchmarking = True
-        main.setup_ni_communication()
 
 
 if __name__ == '__main__':
