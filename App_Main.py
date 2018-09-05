@@ -100,10 +100,9 @@ class Main_UI(QWidget):
                                   'Draw duration all auto': [],
                                   'Draw duration avg': [],
                                   'Draw duration std': [],
-                                  'On time duration': [],
                                   'Number frames per stim': [],
                                   'Number dropped frames': []}
-        self.tests_done, self.number_of_tests = 0, 5000
+        self.tests_done, self.number_of_tests = 0, 50
 
     ####################################################################################################################
     """  PSYCHOPY functions  """
@@ -275,17 +274,6 @@ class Main_UI(QWidget):
                 # Print for how long the stimulus has been on
                 print('     ... stim duration: {}'.format(elapsed * 1000))
 
-                # Get for how long the stimulus should be left on, and time it
-                slept = 0
-                try:
-                    params = self.prepared_stimuli[self.current_stim_params_displayed]
-                    ontimer = time.clock()
-                    time.sleep(int(int(params['on_time'])/1000))
-                    slept = time.clock()-ontimer
-                    print('     ... ON time {}'.format(slept*1000))
-                except:
-                    pass
-
                 if self.benchmarking:
                     # Store results
                     print('----->>> {} frames where dropped'.format(self.psypy_window.nDroppedFrames))
@@ -294,7 +282,6 @@ class Main_UI(QWidget):
                     self.benchmark_results['Number dropped frames'].append(self.psypy_window.nDroppedFrames)
                     self.benchmark_results['Ms per frame'] = self.screenMs
                     self.benchmark_results['Stim duration'].append(elapsed)
-                    self.benchmark_results['On time duration'].append(slept)
                     self.benchmark_results['Draw duration all'].append(all_draws)
                     self.benchmark_results['Draw duration all auto'].append(self.psypy_window.frameIntervals)
                     self.psypy_window.frameIntervals = []

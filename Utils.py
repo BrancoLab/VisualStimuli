@@ -55,10 +55,24 @@ class Stimuli_calculator():
 
         # Prepare radii steps
         if params['modality'] == 'linear':
-            numExpSteps = np.ceil(int(params['expand_time']) / screenMs) +1
+            numExpSteps = int(np.round(int(params['expand_time']) / screenMs))
+            numOnSteps = int(np.round(int(params['on_time']) / screenMs))
 
+            # calculate loom radii during expansioin phase
             radii = np.linspace(float(params['start_size']),
                                 float(params['end_size']), numExpSteps)
+
+            # keep the radius constant during on time
+            last_radius = radii[-1]
+            on_radii = np.repeat(last_radius, numOnSteps)
+
+            # put everything together
+            radii = np.append(radii, on_radii)
+
+            # Repeat the stimulus N times
+            if int(params['repeats']) > 0:
+                radii = np.tile(radii, int(params['repeats']))
+
         elif params['modality'] == 'exponential':
             # Get the parameters to calculate the loom expansion steps
             speed = int(params['LV speed'])/1000

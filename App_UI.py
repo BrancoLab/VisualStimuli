@@ -87,19 +87,18 @@ class App_layout():
         # Available yml files
         self.grid.addWidget(self.params_files_label, 0, 0)
 
-        self.grid.addWidget(self.param_files_list, 1, 0, 10, 1)
+        self.grid.addWidget(self.param_files_list, 1, 0, 4, 5)
 
         # Loaded stims
-        self.grid.addWidget(self.laoded_stims_label, 0, 1, )
+        self.grid.addWidget(self.laoded_stims_label, 5, 0)
 
-        self.grid.addWidget(self.loaded_stims_list, 1, 1, 10, 1)
+        self.grid.addWidget(self.loaded_stims_list, 6, 0, 3, 4)
 
         # Current open stim
         self.grid.addWidget(self.filename_edit, 0, 2, 1, 2)
 
         for i in range(10):
-            if i < 2:
-                continue
+
             # Create empty parameter fields
             lbl = QLabel('Empty param')
             lbl.setObjectName('ParamName')
@@ -120,10 +119,10 @@ class App_layout():
             self.grid.addWidget(entry, 1 + i, 3, 1, 1)
 
         # Bg Luminosity and delay
-        self.grid.addWidget(self.bg_label, 1, 2)
-        self.grid.addWidget(self.delay_label, 2, 2)
-        self.grid.addWidget(self.bg_edit, 1, 3)
-        self.grid.addWidget(self.delay_edit, 2, 3)
+        self.grid.addWidget(self.bg_label, 9, 0)
+        self.grid.addWidget(self.delay_label, 10, 0)
+        self.grid.addWidget(self.bg_edit, 9, 1)
+        self.grid.addWidget(self.delay_edit, 10, 1)
 
         # Launch btn
         self.grid.addWidget(self.launch_btn, 14, 0, 1, 4)
@@ -234,13 +233,13 @@ class App_layout():
 
                         QLineEdit#BaseParam {
                             font-size: 14pt;
-                            max-width: 250px;
+                            max-width: 200px;
 
                         }
 
                         QListWidget {
                             font-size: 14pt;
-                            max-width: 500;
+                            max-width: 510px;
                             background-color: #c1c1c1;
                             border-radius: 4px;
 

@@ -13,8 +13,9 @@ params = {'legend.fontsize': 12,
           'legend.handlelength': 1}
 plt.rcParams.update(params)
 
+
 def plot_benchmark_results(results):
-    f, axarr = plt.subplots(5, 1, facecolor=[0.1, 0.1, 0.1])
+    f, axarr = plt.subplots(4, 1, facecolor=[0.1, 0.1, 0.1])
     f.tight_layout()
     for idx, ax in enumerate(axarr):
         ax.set(facecolor=[0.2, 0.2, 0.2])
@@ -23,8 +24,6 @@ def plot_benchmark_results(results):
     axarr[0].plot([x*1000 for x in results['Stim duration']], color='red', label='Stim duration')
     axarr[0].plot([x*results['Ms per frame'] for x in results['Number frames per stim']],
                   color=[0.75, 0.75, 0.75], label='Calculated duration')
-
-
 
 
 
@@ -60,12 +59,6 @@ def plot_benchmark_results(results):
     axarr[3].plot(results['Number dropped frames'], color='red', label='Dropped')
     axarr[3].axhline(results['Ms per frame'], color=[.6, .6, .6], label='Ms per frame')
 
-
-
-
-
-    axarr[4].set(title='Stim ON duration (ms)', ylim=[950, 1050])
-    axarr[4].plot([x*1000 for x in results['On time duration']], color='blue', label='On duration')
 
     for ax in axarr:
         legend = ax.legend(frameon=True)
