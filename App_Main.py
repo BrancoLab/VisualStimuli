@@ -41,8 +41,13 @@ class Main_UI(QWidget):
         self.threadpool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-        main_loop_worker = Worker(self.main_loop)
-        self.threadpool.start(main_loop_worker)  # Now the mainloop will keep goin
+        # Loop to handle psychopy stim generation
+        psychopy_loop_worker = Worker(self.psychopy_loop)
+        self.threadpool.start(psychopy_loop_worker)  # Now the psychopy will keep looping
+
+        # Loop to handle mantis comms
+        mantis_loop_worker = Worker(self.mantis_loop)
+        self.threadpool.start(mantis_loop_worker)
 
         # Create GUI UI
         App_layout.create_widgets(self)
@@ -330,7 +335,7 @@ class Main_UI(QWidget):
     """    MAIN LOOP  """
     ####################################################################################################################
 
-    def main_loop(self):
+    def psychopy_loop(self):
         """
         The main loop runs in a separate thread from the GUI
 
@@ -384,6 +389,24 @@ class Main_UI(QWidget):
                 self.psypy_window.flip()
             except:
                 print('Didnt flip')
+
+    ####################################################################################################################
+    """    MANTIS COMMS LOOP  """
+    ####################################################################################################################
+
+    def mantis_loop(self):
+        """
+        Set up mantis server comms.
+        Then keep looping and receive commands from mantis, parse them correctly.
+        if the correct message is received a stimulus is triggered by MantisComms
+        """
+        # Set up mantis comms
+        self.mantis_coms = MantisComms(self)
+        print("Mantis comms started")
+
+        # Keep looping and reading data
+        while True:
+            self.mantis_coms.receive()
 
 ####################################################################################################################
 ####################################################################################################################
