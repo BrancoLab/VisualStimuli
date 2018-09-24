@@ -203,9 +203,12 @@ class Main_UI(QWidget):
                     params = dict(type='audio')
                 frames = self.stim_frames
             else:
-                params = self.prepared_stimuli[stim]
-                if isinstance(params, str):
-                    params = dict(type='audio')
+                if 'delay' in stim:
+                    params = dict(type='delay')
+                else:
+                    params = self.prepared_stimuli[stim.split('__')[1]]
+                    if isinstance(params, str):
+                        params = dict(type='audio')
                 frames = self.stim_frames[stim]
 
             # Create a LOOM
@@ -247,6 +250,10 @@ class Main_UI(QWidget):
                         self.audio_stim.play()
                     except:
                         print('At the moment cannot play more than one audio stim at the same time')
+
+            # play DELAY
+            if 'delay' in params['type'].lower():
+                pass  # at the moment the code doesn't require any changes when we are producing the delay
 
         # Create the square for Light Dependant Resistors [change color depending of if other stims are on or not
         if self.settings['square on']:
@@ -293,18 +300,14 @@ class Main_UI(QWidget):
             if not isinstance(self.stim_frames, dict):
                 self.stim_creator()
             else:
-                stim_name = list(self.stim_frames.keys())[self.playing_stim_num]
+                stim_name = sorted(list(self.stim_frames.keys()))[self.playing_stim_num]
                 self.stim_creator(stim_name)
 
             # Keep track of our progress as we update the stim
             self.stim_frame_number += 1
 
             if not isinstance(self.stim_frames, dict):
-                if isinstance(self.stim_frames, tuple):
-                    check = len(self.stim_frames[-1])
-                else:
-                    check = len(self.stim_frames)
-                if self.stim_frame_number == check:
+                if self.stim_frame_number == len(self.stim_frames[-1]):
                     # the last elemnt in stim frames is as long as the duration of the stim
                     self.psypy_window.flip()  # Flip here to make sure that last frame lasts as long as the others
 
@@ -350,12 +353,8 @@ class Main_UI(QWidget):
             else:
                 # if we are playing multiple stims in a row the way the stim managare handles is different from
                 # single stims
-                stim_name = list(self.stim_frames.keys())[self.playing_stim_num]
-                if '.wav' in stim_name:
-                    check = len(self.stim_frames[stim_name])
-                else:
-                    check = len(self.stim_frames[stim_name][-1])
-                if self.stim_frame_number == check:
+                stim_name = sorted(list(self.stim_frames.keys()))[self.playing_stim_num]
+                if self.stim_frame_number == len(self.stim_frames[stim_name][-1]):
 
                     self.psypy_window.flip()
                     self.stim = None

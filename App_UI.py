@@ -305,7 +305,6 @@ class App_control():
                             '.wav' not in main.current_stim_params_displayed:
                         main.prepared_stimuli[main.current_stim_params_displayed][label] = value
 
-
     @staticmethod
     def update_params_widgets(main, stim_name):
         """ Takes the parameters form one of the loaded stims [in the list widget] and updates the widgets to display
@@ -520,7 +519,7 @@ class App_control():
 
             # Get durations
             all_frames = {}
-            for stim in stims_to_play:
+            for idx, stim in enumerate(stims_to_play):
                 if 'deleted' in stim:
                     continue
                 elif '.wav' in stim:
@@ -534,7 +533,15 @@ class App_control():
                     calcuated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)
                     stim_frames = calcuated_stim.stim_frames
 
-                all_frames[stim] = stim_frames
+                all_frames['{}__{}'.format(idx, stim)] = stim_frames
+
+                # Prep delay
+                if main.stim_delay:
+                    params = dict(type='delay', duration=main.stim_delay)
+                    calcuated_delay = Stimuli_calculator(main.psypy_window, params, main.screenMs)
+                    delay_frames = calcuated_delay.stim_frames
+                    all_frames['{}z__delay'.format(idx)] = delay_frames
+
             main.stim_frames = all_frames
             main.stim_on = True
 

@@ -37,6 +37,8 @@ class Stimuli_calculator():
             self.stim_frames = self.grater(wnd, params, screenMs)
         elif 'audio' in params['type'].lower():
             self.stim_frames = self.audio_generator(wnd, params, screenMs)
+        elif 'delay' in params['type'].lower():
+            self.stim_frames = self.delayer(wnd, params, screenMs)
 
     def loomer(self, wnd, params, screenMs):
         """
@@ -171,17 +173,18 @@ class Stimuli_calculator():
         numExpSteps = int(np.round(int(params['duration']) / screenMs))
         frames = np.zeros(numExpSteps-1)
         np.insert(frames, 0, -1)
-        return frames
+        return None, frames   # returning None so that the output is a tuple like other functions
 
-
-
+    def delayer(self, wnd, params, screenMs):
+        numExpSteps = int(np.round(int(params['duration']) / screenMs))
+        frames = np.zeros(numExpSteps)
+        return None, frames  # returning None so that the output is a tuple like other functions
 
 ####################################################################################################################
 ####################################################################################################################
 """    WORKER CLASSES FOR MULTI THREADING   """
 ####################################################################################################################
 ####################################################################################################################
-
 
 class WorkerSignals(QObject):
     '''
