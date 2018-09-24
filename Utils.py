@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import math
 import socket
+import random
 
 import App_UI
 
@@ -117,7 +118,11 @@ class Stimuli_calculator():
         Calculates the data for generating a grating stimulus given some params
         same input as loomer
         """
-        numExpSteps = int(np.round(int(params['duration']) / screenMs))
+        dur = int(params['duration'].split(',')[0])
+        dur_range = int(params['duration'].split(',')[1])
+        if dur_range:
+            dur = random.randint(dur-dur_range, dur+dur_range+1)
+        numExpSteps = int(np.round(dur / screenMs))
         x, y, width, height = get_position_in_px(wnd, 'top left', 0, return_scree_size=True)
         if params['units'] == 'cm':
             pos = (0, 0)
@@ -132,7 +137,7 @@ class Stimuli_calculator():
         velocity [i.e. phases per second]. The array is then repeat to be as long as the stimulus we are creating.
         The sign of the phases depends on the direction of movement 
         """
-        frames_per_sec = np.ceil(1000 / screenMs)
+        frames_per_sec = round(1000 / screenMs)
         vel = float(params['velocity'])
         if float(params['direction']) <= 0:
             phase_max = -2
@@ -140,17 +145,24 @@ class Stimuli_calculator():
             phase_max = 2
 
         if vel > 0:
-            phase = np.linspace(0, phase_max, frames_per_sec/vel)
-            if len(phase) == 0:
-                pass
-            repeats = int(numExpSteps)/len(phase)
-            if repeats >= 1:
-                phases = np.tile(phase, int(repeats))
-            else:
-                phases = np.tile(phase, np.ceil(repeats))
-                phases = phases[0:int(numExpSteps)]
-            if abs(len(phases)-int(numExpSteps))>2:
-                pass
+            try:
+                phase_len = frames_per_sec/vel
+                if phase_len > numExpSteps:
+                    phase_len = numExpSteps
+                phase = np.linspace(0, phase_max, phase_len)
+                if len(phase) == 0:
+                    pass
+                repeats = numExpSteps // len(phase)
+                remainder = (numExpSteps / len(phase)) - repeats
+                if repeats >= 1:
+                    phases = np.tile(phase, int(repeats))
+                    if remainder:
+                        phases = np.concatenate((phases, phase[0:round(len(phase)*(1/remainder))]))
+                else:
+                    phases = np.tile(phase, np.ceil(repeats))
+                    phases = phases[0:int(numExpSteps)]
+            except:
+                a = 1
         else:
             phases = np.ones((int(numExpSteps), 1))
 

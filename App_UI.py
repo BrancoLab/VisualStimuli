@@ -4,6 +4,7 @@ from PyQt5.QtGui import *
 import os
 import soundfile as sf
 import numpy as np
+import yaml
 
 from Utils import Stimuli_calculator, get_files, get_list_widget_items, load_yaml, get_param_val, get_param_label
 
