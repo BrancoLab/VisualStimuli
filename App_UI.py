@@ -1,7 +1,9 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-import  os
+import os
+import soundfile as sf
+import numpy as np
 
 from Utils import Stimuli_calculator, get_files, get_list_widget_items, load_yaml, get_param_val, get_param_label
 
@@ -478,9 +480,12 @@ class App_control():
         if main.ready == 'Ready':
             if main.current_stim_params_displayed:
                 main.stim_on = True
-                if not '.wav' in main.current_stim_params_displayed:  # its a visual stim
+                selected_stim = main.loaded_stims_list.currentItem()
+                if selected_stim is None:
+                    selected_stim = main.current_stim_params_displayed
+                if not '.wav' in selected_stim:  # its a visual stim
                     # get params and call stim generator to calculate stim frames
-                    params = main.prepared_stimuli[main.current_stim_params_displayed]
+                    params = main.prepared_stimuli[selected_stim]
                     calcuated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)
                     main.stim_frames = calcuated_stim.stim_frames
                 else:
@@ -488,7 +493,36 @@ class App_control():
 
     @staticmethod
     def launch_all_stims(main):
-        pass
+        """ for each stim calculates the frames and passes them to Main for the execution of the stims """
+        def get_wav_duration(filepath):
+            f = sf.SoundFile(filepath)
+            ms = (len(f)/f.samplerate)*1000
+            return ms
+
+        if main.ready == 'Ready' and main.current_stim_params_displayed:
+            stims_to_play = []
+            # Get stims
+            for stim_id in range(main.loaded_stims_list.count()):
+                item = main.loaded_stims_list.item(stim_id)
+                stims_to_play.append(item.text())
+
+            # Get durations
+            all_frames = {}
+            for stim in stims_to_play:
+                if '.wav' in stim:
+                    duration_ms = get_wav_duration(main.prepared_stimuli[stim])
+                    params = dict(type='audio', duration=duration_ms)
+                    calcuated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)
+                    stim_frames = calcuated_stim.stim_frames
+                else:
+                    # get params and call stim generator to calculate stim frames
+                    params = main.prepared_stimuli[stim]
+                    calcuated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)
+                    stim_frames = calcuated_stim.stim_frames
+
+                all_frames[stim] = stim_frames
+            main.stim_frames = all_frames
+            main.stim_on = True
 
     @staticmethod
     def launch_benchmark(main):

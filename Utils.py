@@ -33,9 +33,10 @@ class Stimuli_calculator():
         # Call subfunctions to generate the stimulus
         if 'loom' in params['type'].lower():
             self.stim_frames = self.loomer(wnd, params, screenMs)
-
-        if 'grating' in params['type'].lower():
+        elif 'grating' in params['type'].lower():
             self.stim_frames = self.grater(wnd, params, screenMs)
+        elif 'audio' in params['type'].lower():
+            self.stim_frames = self.audio_generator(wnd, params, screenMs)
 
     def loomer(self, wnd, params, screenMs):
         """
@@ -109,13 +110,12 @@ class Stimuli_calculator():
 
         return pos, radii
 
-
     def grater(self, wnd, params, screenMs):
         """
         Calculates the data for generating a grating stimulus given some params
         same input as loomer
         """
-        numExpSteps = np.ceil(int(params['duration']) / screenMs)+2
+        numExpSteps = int(np.round(int(params['duration']) / screenMs))
         x, y, width, height = get_position_in_px(wnd, 'top left', 0, return_scree_size=True)
         if params['units'] == 'cm':
             pos = (0, 0)
@@ -148,7 +148,7 @@ class Stimuli_calculator():
                 phases = np.tile(phase, np.ceil(repeats))
                 phases = phases[0:int(numExpSteps)]
             if abs(len(phases)-int(numExpSteps))>2:
-                a = 1
+                pass
         else:
             phases = np.ones((int(numExpSteps), 1))
 
@@ -164,6 +164,14 @@ class Stimuli_calculator():
         #     bg = map_color_scale(int(params['bg color']))
 
         return pos, screen_size, orientation, fg, phases
+
+    def audio_generator(self, wnd, params, screenMs):
+        """ an audio stim is a series of 0 frames just so that we can avoid creating furter stims for the duration
+         of the audio file. A -1 is appendend at the first frame to signal the start of the audiofile"""
+        numExpSteps = int(np.round(int(params['duration']) / screenMs))
+        frames = np.zeros(numExpSteps-1)
+        np.insert(frames, 0, -1)
+        return frames
 
 
 

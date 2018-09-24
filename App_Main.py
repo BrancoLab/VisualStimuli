@@ -68,6 +68,9 @@ class Main_UI(QWidget):
         self.prepared_stimuli = {}
         self.current_stim_params_displayed = ''
 
+        # Flag to cycle through multiple stims if playing >1 stim at the same time
+        self.playing_stim_num = 0
+
         # Stim parameters that should not be desplayed in the GUI [by name]
         self.ignored_params = ['name', 'units', 'type', 'modality', 'Stim type']
 
@@ -177,7 +180,7 @@ class Main_UI(QWidget):
         if not prev_lum == lum:  # only update the background color if we actually changed it
             self.psypy_window.setColor([lum, lum, lum])
 
-    def stim_creator(self):
+    def stim_creator(self, stim=None):
         """
         Creates and initialises stimuli, including the LDR square.
         If the stimuli have been already created, update their properties accordingly (e.g. change radius of expanding
@@ -188,12 +191,19 @@ class Main_UI(QWidget):
 
         # Create the visual stimuli
         if self.stim_on:
-            params = self.prepared_stimuli[self.current_stim_params_displayed]
+            if stim is None:
+                params = self.prepared_stimuli[self.current_stim_params_displayed]
+                frames = self.stim_frames
+            else:
+                params = self.prepared_stimuli[stim]
+                if isinstance(params, str):
+                    params = dict(type='audio')
+                frames = self.stim_frames[stim]
 
             # Create a LOOM
             if 'loom' in params['type'].lower():
-                pos = self.stim_frames[0]
-                radii = self.stim_frames[1]
+                pos = frames[0]
+                radii = frames[1]
 
                 if self.stim is None:
                     self.stim_timer = time.clock()  # Time lifespan of the stim
@@ -203,18 +213,25 @@ class Main_UI(QWidget):
                 self.stim.radius = radii[self.stim_frame_number]
 
             # Create a GRATING
-            if 'grating' in params['Stim type'].lower():
-                pos = self.stim_frames[0]
-                size = self.stim_frames[1]
-                phases = self.stim_frames[-1]
-                ori = self.stim_frames[2]
-                fg_col = self.stim_frames[3]
+            if 'grating' in params['type'].lower():
+                pos = frames[0]
+                size = frames[1]
+                phases = frames[-1]
+                ori = frames[2]
+                fg_col = frames[3]
 
                 if self.stim is None:
                     self.stim_timer = time.clock()  # Time lifespan of the stim
                     self.stim = visual.GratingStim(win=self.psypy_window, size=size, pos=pos, ori=ori, color=fg_col,
                                                    sf=params['spatial frequency'], units=params['units'], interpolate=True)
                 self.stim.phase = phases[self.stim_frame_number]
+
+            # play AUDIO
+            if 'audio' in params['type'].lower():
+                if self.stim_frame_number:
+                    from psychopy import sound
+                    audiofile = sound.Sound(self.prepared_stimuli[stim])
+                    audiofile.play()
 
         # Create the square for Light Dependant Resistors [change color depending of if other stims are on or not
         if self.settings['square on']:
@@ -253,7 +270,6 @@ class Main_UI(QWidget):
                     self.stim_on = False
                 return
 
-
             # If stim is just being created, start clock to time its duration
             if not self.stim_frame_number:
                 self.psypy_window.recordFrameIntervals = True  # Record if we drop frames during stim generation
@@ -264,53 +280,84 @@ class Main_UI(QWidget):
                 self.stim_frame_number = 0
 
             # Create or update the stimulus object
-            self.stim_creator()
+            if not isinstance(self.stim_frames, dict):
+                self.stim_creator()
+            else:
+                stim_name = list(self.stim_frames.keys())[self.playing_stim_num]
+                self.stim_creator(stim_name)
+
 
             # Keep track of our progress as we update the stim
             self.stim_frame_number += 1
 
-            if self.stim_frame_number == len(self.stim_frames[-1]):  # the last elemnt in stim frames is as long as the duration of the stim
-                self.psypy_window.flip()  # Flip here to make sure that last frame lasts as long as the others
+            if not isinstance(self.stim_frames, dict):
+                if self.stim_frame_number == len(self.stim_frames[-1]):
+                    # the last elemnt in stim frames is as long as the duration of the stim
+                    self.psypy_window.flip()  # Flip here to make sure that last frame lasts as long as the others
 
-                # Keep track of stim lifespan
-                elapsed = time.clock() - self.stim_timer
-                print('     ... stim duration: {}'.format(elapsed * 1000))
+                    # Keep track of stim lifespan
+                    elapsed = time.clock() - self.stim_timer
+                    print('     ... stim duration: {}'.format(elapsed * 1000))
 
-                # Keep track of time it took to update (draw) each frame
-                self.draws = np.array(self.psypy_window.frameIntervals)
-                print('     ... number of exp frames {}, number of intervals {}'.format(self.stim_frame_number,
-                                                                               len(self.psypy_window.frameIntervals)))
-                self.psypy_window.frameIntervals = []
-                self.psypy_window.recordFrameIntervals = False
+                    # Keep track of time it took to update (draw) each frame
+                    self.draws = np.array(self.psypy_window.frameIntervals)
+                    print('     ... number of exp frames {}, number of intervals {}'.format(self.stim_frame_number,
+                                                                                   len(self.psypy_window.frameIntervals)))
+                    self.psypy_window.frameIntervals = []
+                    self.psypy_window.recordFrameIntervals = False
 
-                all_draws, avg_draw, std_draw = self.draws.copy(), np.mean(self.draws), np.std(self.draws)
-                print('     ... avg time between draws: {}, std {}'.format(avg_draw*1000, std_draw))
-                self.draws = []
+                    all_draws, avg_draw, std_draw = self.draws.copy(), np.mean(self.draws), np.std(self.draws)
+                    print('     ... avg time between draws: {}, std {}'.format(avg_draw*1000, std_draw))
+                    self.draws = []
 
-                if self.benchmarking:
-                    # Store results
-                    print('----->>> {} frames where dropped'.format(self.psypy_window.nDroppedFrames))
-                    self.benchmark_results['Stim name'] = self.current_stim_params_displayed
-                    self.benchmark_results['Monitor name'] = self.psypy_window.monitor.name
-                    self.benchmark_results['Number dropped frames'].append(self.psypy_window.nDroppedFrames)
-                    self.benchmark_results['Ms per frame'] = self.screenMs
-                    self.benchmark_results['Stim duration'].append(elapsed)
-                    self.benchmark_results['Draw duration all'].append(all_draws)
-                    self.benchmark_results['Draw duration avg'].append(avg_draw)
-                    self.benchmark_results['Draw duration std'].append(std_draw)
-                    self.benchmark_results['Number frames per stim'].append(len(self.stim_frames[-1]))
+                    if self.benchmarking:
+                        # Store results
+                        print('----->>> {} frames where dropped'.format(self.psypy_window.nDroppedFrames))
+                        self.benchmark_results['Stim name'] = self.current_stim_params_displayed
+                        self.benchmark_results['Monitor name'] = self.psypy_window.monitor.name
+                        self.benchmark_results['Number dropped frames'].append(self.psypy_window.nDroppedFrames)
+                        self.benchmark_results['Ms per frame'] = self.screenMs
+                        self.benchmark_results['Stim duration'].append(elapsed)
+                        self.benchmark_results['Draw duration all'].append(all_draws)
+                        self.benchmark_results['Draw duration avg'].append(avg_draw)
+                        self.benchmark_results['Draw duration std'].append(std_draw)
+                        self.benchmark_results['Number frames per stim'].append(len(self.stim_frames[-1]))
 
-                    self.tests_done += 1
+                        self.tests_done += 1
 
-                # After everything is done, clean up
-                self.stim = None
-                self.stim_frames = False
-                self.stim_frame_number = False
-                self.stim_on = False
+                    # After everything is done, clean up
+                    self.stim = None
+                    self.stim_frames = False
+                    self.stim_frame_number = False
+                    self.stim_on = False
 
-                self.ready = 'Ready'
-                # Update status label
-                App_control.update_status_label(self)
+                    # Update status label
+                    self.ready = 'Ready'
+                    App_control.update_status_label(self)
+            else:
+                # if we are playing multiple stims in a row the way the stim managare handles is different from
+                # single stims
+                stim_name = list(self.stim_frames.keys())[self.playing_stim_num]
+                if '.wav' in stim_name:
+                    check = len(self.stim_frames[stim_name])
+                else:
+                    check = len(self.stim_frames[stim_name][-1])
+                if self.stim_frame_number == check:
+                    self.psypy_window.flip()
+                    self.stim = None
+                    self.stim_frame_number = 0
+                    self.playing_stim_num += 1
+
+                    if self.playing_stim_num >= len(list(self.stim_frames.keys())):  # played all stims
+                        # After everything is done, clean up
+                        self.stim = None
+                        self.stim_frames = False
+                        self.stim_frame_number = False
+                        self.stim_on = False
+                        self.playing_stim_num = 0
+                        # Update status label
+                        self.ready = 'Ready'
+                        App_control.update_status_label(self)
 
         else:
             # Call stim creator anyway so that we can update the color of the LDR sqare if one is present
