@@ -477,19 +477,31 @@ class App_control():
     # LAUNCH btn function
     @staticmethod
     def launch_stim(main):
+        def get_wav_duration(filepath):
+            f = sf.SoundFile(filepath)
+            ms = (len(f)/f.samplerate)*1000
+            return ms
         if main.ready == 'Ready':
             if main.current_stim_params_displayed:
                 main.stim_on = True
                 selected_stim = main.loaded_stims_list.currentItem()
                 if selected_stim is None:
                     selected_stim = main.current_stim_params_displayed
-                if not '.wav' in selected_stim:  # its a visual stim
+                else:
+                    selected_stim = selected_stim.text()
+
+                if 'deleted' in selected_stim:
+                    pass
+                elif not '.wav' in selected_stim:  # its a visual stim
                     # get params and call stim generator to calculate stim frames
                     params = main.prepared_stimuli[selected_stim]
                     calcuated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)
                     main.stim_frames = calcuated_stim.stim_frames
                 else:
-                    pass  # the stim manager will take care of playing the audio file
+                    duration_ms = get_wav_duration(main.prepared_stimuli[selected_stim])
+                    params = dict(type='audio', duration=duration_ms)
+                    calcuated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)
+                    main.stim_frames = calcuated_stim.stim_frames
 
     @staticmethod
     def launch_all_stims(main):
@@ -509,7 +521,9 @@ class App_control():
             # Get durations
             all_frames = {}
             for stim in stims_to_play:
-                if '.wav' in stim:
+                if 'deleted' in stim:
+                    continue
+                elif '.wav' in stim:
                     duration_ms = get_wav_duration(main.prepared_stimuli[stim])
                     params = dict(type='audio', duration=duration_ms)
                     calcuated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)

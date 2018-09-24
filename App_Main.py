@@ -82,7 +82,7 @@ class Main_UI(QWidget):
         stim_frame_number  - keep track of progess when looping through stim_frames
         """
         self.stim_on = False
-        self.stim, self.stim_frames, self.stim_frame_number = None, False, False
+        self.stim, self.audio_stim, self.stim_frames, self.stim_frame_number = None, None, False, False
 
         # Keep track of how long it takes to draw on the psyspy window
         self.last_draw, self.draws = 0, []
@@ -192,7 +192,15 @@ class Main_UI(QWidget):
         # Create the visual stimuli
         if self.stim_on:
             if stim is None:
-                params = self.prepared_stimuli[self.current_stim_params_displayed]
+                selected_stim = self.loaded_stims_list.currentItem()
+                if selected_stim is None:
+                    selected_stim = self.current_stim_params_displayed
+                else:
+                    selected_stim = selected_stim.text()
+                if not '.wav' in selected_stim:
+                    params = self.prepared_stimuli[selected_stim]
+                else:
+                    params = dict(type='audio')
                 frames = self.stim_frames
             else:
                 params = self.prepared_stimuli[stim]
@@ -228,10 +236,17 @@ class Main_UI(QWidget):
 
             # play AUDIO
             if 'audio' in params['type'].lower():
-                if self.stim_frame_number:
+                if self.stim_frame_number == 0:
                     from psychopy import sound
-                    audiofile = sound.Sound(self.prepared_stimuli[stim])
-                    audiofile.play()
+                    self.stim_timer = time.clock()  # Time lifespan of the stim
+                    try:
+                        if stim is None:
+                            self.audio_stim = sound.Sound(self.prepared_stimuli[selected_stim])
+                        else:
+                            self.audio_stim = sound.Sound(self.prepared_stimuli[stim])
+                        self.audio_stim.play()
+                    except:
+                        print('At the moment cannot play more than one audio stim at the same time')
 
         # Create the square for Light Dependant Resistors [change color depending of if other stims are on or not
         if self.settings['square on']:
@@ -263,11 +278,6 @@ class Main_UI(QWidget):
                 that might have not been done by the time that stim_manager is called in the main loop
                 Just exit the function to avoid problems. Alternatively it could be an audio stim, in which case
                  just play the .wav file """
-                if '.wav' in self.current_stim_params_displayed:
-                    from psychopy import sound
-                    audiofile = sound.Sound(self.prepared_stimuli[self.current_stim_params_displayed])
-                    audiofile.play()
-                    self.stim_on = False
                 return
 
             # If stim is just being created, start clock to time its duration
@@ -286,12 +296,15 @@ class Main_UI(QWidget):
                 stim_name = list(self.stim_frames.keys())[self.playing_stim_num]
                 self.stim_creator(stim_name)
 
-
             # Keep track of our progress as we update the stim
             self.stim_frame_number += 1
 
             if not isinstance(self.stim_frames, dict):
-                if self.stim_frame_number == len(self.stim_frames[-1]):
+                if isinstance(self.stim_frames, tuple):
+                    check = len(self.stim_frames[-1])
+                else:
+                    check = len(self.stim_frames)
+                if self.stim_frame_number == check:
                     # the last elemnt in stim frames is as long as the duration of the stim
                     self.psypy_window.flip()  # Flip here to make sure that last frame lasts as long as the others
 
@@ -326,7 +339,7 @@ class Main_UI(QWidget):
                         self.tests_done += 1
 
                     # After everything is done, clean up
-                    self.stim = None
+                    self.stim, self.audio_stim = None, None
                     self.stim_frames = False
                     self.stim_frame_number = False
                     self.stim_on = False
@@ -343,6 +356,7 @@ class Main_UI(QWidget):
                 else:
                     check = len(self.stim_frames[stim_name][-1])
                 if self.stim_frame_number == check:
+
                     self.psypy_window.flip()
                     self.stim = None
                     self.stim_frame_number = 0
@@ -351,6 +365,7 @@ class Main_UI(QWidget):
                     if self.playing_stim_num >= len(list(self.stim_frames.keys())):  # played all stims
                         # After everything is done, clean up
                         self.stim = None
+                        self.audio_stim = None
                         self.stim_frames = False
                         self.stim_frame_number = False
                         self.stim_on = False
@@ -366,7 +381,6 @@ class Main_UI(QWidget):
     ####################################################################################################################
     """  NI BOARD functions  """
     ####################################################################################################################
-
     def setup_ni_communication(self):
         """
         Work in progress
@@ -387,7 +401,6 @@ class Main_UI(QWidget):
     ####################################################################################################################
     """    MAIN LOOP  """
     ####################################################################################################################
-
     def psychopy_loop(self):
         """
         The main loop runs in a separate thread from the GUI
@@ -446,7 +459,6 @@ class Main_UI(QWidget):
     ####################################################################################################################
     """    MANTIS COMMS LOOP  """
     ####################################################################################################################
-
     def mantis_loop(self):
         """
         Set up mantis server comms.
