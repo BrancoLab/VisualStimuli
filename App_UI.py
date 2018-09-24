@@ -456,14 +456,15 @@ class App_control():
             if not short.split in files_in_list:
                 main.audio_files_list.addItem(short)
 
-    def save_params_yaml_file(self):
+    @staticmethod
+    def save_params_yaml_file(main):
         # Save file
-        if self.current_stim_params_displayed and self.prepared_stimuli:
-            params = self.prepared_stimuli[self.current_stim_params_displayed]
-            fname = self.filename_edit.text()
-            path = self.settings['stim_configs']
+        if main.current_stim_params_displayed and main.prepared_stimuli:
+            params = main.prepared_stimuli[main.current_stim_params_displayed]
+            fname = main.filename_edit.text()
+            path = main.settings['stim_configs']
 
-            if fname in self.prepared_stimuli.keys():
+            if fname in main.prepared_stimuli.keys():
                 print('Trying to overwrite a parameters file !!!! <---------')
                 # TODO handle this better ?
 
@@ -472,7 +473,7 @@ class App_control():
                 yaml.dump(params, outfile, default_flow_style=True)
 
         # Update files list widget
-        App_control.get_stims_yaml_files_from_folder(self)
+        App_control.get_stims_yaml_files_from_folder(main)
 
     # LAUNCH btn function
     @staticmethod

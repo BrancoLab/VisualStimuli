@@ -1,0 +1,2 @@
+{Stim type: grating, direction: '-1', duration: '2000, 1000', fg color: '255', orientation: '180',
+  spatial frequency: '0.15', type: grating, units: deg, velocity: '0.15'}
