@@ -19,6 +19,6 @@ square width: 5           # Square side length in cm
 square default col: 255  # default color [when the stimulus is off], when stim is on the color is inverted
 
 # DEFINE PATHS
-stim_configs: '.\stim_setups'
-
+stim_configs: '.\Visual_stimuli'
+audio_files: '.\Audio_files'
 

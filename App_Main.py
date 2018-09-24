@@ -46,8 +46,8 @@ class Main_UI(QWidget):
         self.threadpool.start(psychopy_loop_worker)  # Now the psychopy will keep looping
 
         # Loop to handle mantis comms
-        mantis_loop_worker = Worker(self.mantis_loop)
-        self.threadpool.start(mantis_loop_worker)
+        # mantis_loop_worker = Worker(self.mantis_loop)
+        # self.threadpool.start(mantis_loop_worker)
 
         # Create GUI UI
         App_layout.create_widgets(self)
@@ -56,6 +56,9 @@ class Main_UI(QWidget):
 
         # Load parameters YAML files
         App_control.get_stims_yaml_files_from_folder(self)
+
+        # Load Audio WAV files
+        App_control.get_audio_files_from_folder(self)
 
     def initialise_variables(self):
         # Flag to signal when app is ready to launch a stim
@@ -115,7 +118,7 @@ class Main_UI(QWidget):
 
     def start_psychopy(self):
         t = time.clock()
-        from psychopy import visual, logging  # This needs to be here, it can't be outside the threat the window is created from
+        from psychopy import visual, logging, sound  # This needs to be here, it can't be outside the threat the window is created from
         print('First psychopy import took: {}'.format((time.clock()-t)*1000))
 
         # Create monitor object
@@ -237,11 +240,19 @@ class Main_UI(QWidget):
         * When all frames have been played, the window is cleaned
         """
         if self.stim_on:
-            if isinstance(self.stim_frames, bool):  # if it is we havent generated the stim frames yet
-                # This is due to the fact that the frames are generated in another thread and the
-                # that might have not been done by the time that stim_manager is called in the main loop
-                # Just exit the function to avoid problems
+            if isinstance(self.stim_frames, bool):
+                """" if it is we havent generated the stim frames yet
+                This is due to the fact that the frames are generated in another thread and the
+                that might have not been done by the time that stim_manager is called in the main loop
+                Just exit the function to avoid problems. Alternatively it could be an audio stim, in which case
+                 just play the .wav file """
+                if '.wav' in self.current_stim_params_displayed:
+                    from psychopy import sound
+                    audiofile = sound.Sound(self.prepared_stimuli[self.current_stim_params_displayed])
+                    audiofile.play()
+                    self.stim_on = False
                 return
+
 
             # If stim is just being created, start clock to time its duration
             if not self.stim_frame_number:
@@ -252,11 +263,6 @@ class Main_UI(QWidget):
                 # Initialise variable to keep track of progress during stim updates
                 self.stim_frame_number = 0
 
-            """
-            Two options: create the stim one and then update it using stim_updater or crate a new stim everyframe.
-            It looks like creating a new stim every frame [using stim_creator] results in more consistent time
-            between frames
-            """
             # Create or update the stimulus object
             self.stim_creator()
 

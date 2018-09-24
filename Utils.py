@@ -262,7 +262,7 @@ class MantisComms():
             self.conn, self.addr = self.server.accept()  # use the same TCP/IP refnum for the experiment
         except:
             raise Warning('Could not establish communication with Mantis')
-        
+
         # Reference the stim trigger function
         self.stim_trigger_func = App_UI.App_control.launch_stim
         # Referernce to Main App class instance for stim trigger

@@ -22,16 +22,19 @@ class App_layout():
 
         # Available yml file
         self.params_files_label = QLabel('Parameter files')
-
         self.param_files_list = QListWidget()
         self.param_files_list.itemDoubleClicked.connect(lambda: App_control.load_stim_params_from_list_widget(self))
 
+        # Available wav file
+        self.audio_files_label = QLabel('Audio files')
+        self.audio_files_list = QListWidget()
+        self.audio_files_list.itemDoubleClicked.connect(lambda: App_control.load_audio_file_from_list_widget(self))
+
         # Loaded stims
         self.laoded_stims_label = QLabel('Loaded stims')
-
         self.loaded_stims_list = QListWidget()
         self.loaded_stims_list.currentItemChanged.connect(lambda: App_control.update_params_widgets)
-        self.loaded_stims_list.itemDoubleClicked.connect(App_control.remove_loaded_stim_from_widget_list)
+        self.loaded_stims_list.itemDoubleClicked.connect(lambda: App_control.remove_loaded_stim_from_widget_list(self))
 
         # current open stim
         self.filename_edit = QLineEdit('Params file - not loaded -')
@@ -59,6 +62,10 @@ class App_layout():
         param = {self.delay_label.text(): [self.delay_label, self.delay_edit]}
         self.params_widgets_dict[self.delay_label.text()] = param
 
+        # Launch ALL btn
+        self.launch_all_btn = QPushButton(text='Launch All Stims')
+        self.launch_all_btn.clicked.connect(lambda: App_control.launch_all_stims(self))
+
         # Launch btn
         self.launch_btn = QPushButton(text='Launch')
         self.launch_btn.clicked.connect(lambda: App_control.launch_stim(self))
@@ -80,19 +87,21 @@ class App_layout():
     @staticmethod
     def define_layout(self):
         # Status label
-        self.grid.addWidget(self.status_label, 16, 0, 1, 2)
+        self.grid.addWidget(self.status_label, 16, 2, 1, 2)
         self.status_label.setObjectName('Status')
         self.status_label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
 
         # Available yml files
         self.grid.addWidget(self.params_files_label, 0, 0)
+        self.grid.addWidget(self.param_files_list, 1, 0, 3, 5)
 
-        self.grid.addWidget(self.param_files_list, 1, 0, 4, 5)
+        # Available wav files
+        self.grid.addWidget(self.audio_files_label, 4, 0)
+        self.grid.addWidget(self.audio_files_list, 5, 0, 3, 5)
 
         # Loaded stims
-        self.grid.addWidget(self.laoded_stims_label, 5, 0)
-
-        self.grid.addWidget(self.loaded_stims_list, 6, 0, 3, 4)
+        self.grid.addWidget(self.laoded_stims_label, 8, 0)
+        self.grid.addWidget(self.loaded_stims_list, 9, 0, 2, 4)
 
         # Current open stim
         self.grid.addWidget(self.filename_edit, 0, 2, 1, 2)
@@ -119,19 +128,21 @@ class App_layout():
             self.grid.addWidget(entry, 1 + i, 3, 1, 1)
 
         # Bg Luminosity and delay
-        self.grid.addWidget(self.bg_label, 9, 0)
-        self.grid.addWidget(self.delay_label, 10, 0)
-        self.grid.addWidget(self.bg_edit, 9, 1)
-        self.grid.addWidget(self.delay_edit, 10, 1)
+        self.grid.addWidget(self.bg_label, 13, 0)
+        self.grid.addWidget(self.delay_label, 14, 0)
+        self.grid.addWidget(self.bg_edit, 13, 1)
+        self.grid.addWidget(self.delay_edit, 14, 1)
 
-        # Launch btn
-        self.grid.addWidget(self.launch_btn, 14, 0, 1, 4)
+        # Launch and launch all btns
+        self.grid.addWidget(self.launch_all_btn, 13, 2, 1, 2)
+        self.launch_all_btn.setObjectName('LaunchBtn')
+        self.grid.addWidget(self.launch_btn, 14, 2, 1, 2)
         self.launch_btn.setObjectName('LaunchBtn')
 
         # Load and save btn
-        self.grid.addWidget(self.load_btn, 13, 0, 1, 1)
-        self.grid.addWidget(self.remove_btn, 13, 1, 1, 1)
-        self.grid.addWidget(self.save_btn, 13, 2, 1, 2)
+        self.grid.addWidget(self.load_btn, 15, 0, 1, 1)
+        self.grid.addWidget(self.remove_btn, 15, 1, 1, 1)
+        self.grid.addWidget(self.save_btn, 16, 0, 1, 2)
 
         # Finalise layout
         self.setLayout(self.grid)
@@ -141,7 +152,7 @@ class App_layout():
         self.setWindowTitle('Review')
 
         # Benchamrk btn
-        self.grid.addWidget(self.bench_btn, 15, 0, 1, 4)
+        self.grid.addWidget(self.bench_btn, 15, 2, 1, 2)
         self.bench_btn.setObjectName('BennchBtn')
 
         self.show()
@@ -166,18 +177,16 @@ class App_layout():
                         }
 
                         QPushButton#LaunchBtn {
-                            color: #000000;
+                            color: #d4d8dd;
                             font-size: 18pt;
-                            background-color: #ce0404;
-                            border: 2px solid #000000;
-                            min-height: 80px;
+                            background-color: #7ba1d6;
+                            border: 4px solid #8e9092;
                         }
 
                         QPushButton#BennchBtn {
                             color: #000000;
                             font-size: 18pt;
                             background-color: #df972a;
-                            min-height: 60px;
                         }
 
                         QLabel {
@@ -193,7 +202,6 @@ class App_layout():
                             color: #000000;
                             background-color: #b40505;
                             font-size: 14pt;
-                            max-height: 40pt;
                             border-radius: 6px; 
                             }
 
@@ -291,8 +299,10 @@ class App_control():
                 if not main.current_stim_params_displayed is None:
                     label = get_param_label(param)
                     value = get_param_val(param, string=True)
-                    if len(label) > 1 and main.current_stim_params_displayed:
+                    if len(label) > 1 and main.current_stim_params_displayed and \
+                            '.wav' not in main.current_stim_params_displayed:
                         main.prepared_stimuli[main.current_stim_params_displayed][label] = value
+
 
     @staticmethod
     def update_params_widgets(main, stim_name):
@@ -360,20 +370,34 @@ class App_control():
             main.loaded_stims_list.addItem(file)  # Add the file to the widget list
             main.current_stim_params_displayed = file  # Set the currently displayed stim accordingly
 
-    def remove_loaded_stim_from_widget_list(self):
-        self.ready = 'Busy'
+    @staticmethod
+    def load_audio_file_from_list_widget(main):
+        """
+        Get the selected file in the widget list of .wav files and prep it for stim delivery
+        """
+        if main.param_files_list.currentItem().text():
+            # Get correct path to file
+            file = main.audio_files_list.currentItem().text()
+            file_long = os.path.join(main.settings['audio_files'], file)
+            main.prepared_stimuli[file] = file_long  # store the path to the file
+            main.loaded_stims_list.addItem(file)  # Add the file to the widget list
+            main.current_stim_params_displayed = file  # Set the currently displayed stim accordingly
+
+    @staticmethod
+    def remove_loaded_stim_from_widget_list(main):
+        main.ready = 'Busy'
         try:
-            if self.loaded_stims_list.count() >= 1:
+            if main.loaded_stims_list.count() >= 1:
                 # Remove item from loaded stims dictionary
-                if self.loaded_stims_list.currentItem() is None:
+                if main.loaded_stims_list.currentItem() is None:
                     return
 
-                sel = self.loaded_stims_list.currentItem().text()
-                if sel in self.prepared_stimuli.keys():
-                    del self.prepared_stimuli[sel]
+                sel = main.loaded_stims_list.currentItem().text()
+                if sel in main.prepared_stimuli.keys():
+                    del main.prepared_stimuli[sel]
 
                 # Clean up widgets
-                for param, wdgets in self.params_widgets_dict.items():
+                for param, wdgets in main.params_widgets_dict.items():
                     if param not in ['Background Luminosity', 'Delay']:
                         label = get_param_label(wdgets, object=True)
                         value = get_param_val(wdgets, object=True)
@@ -381,24 +405,25 @@ class App_control():
                         value.setText('')
 
                 # Remove item from list widget
-                qIndex = self.loaded_stims_list.indexFromItem(self.loaded_stims_list.selectedItems()[0])
+                qIndex = main.loaded_stims_list.indexFromItem(main.loaded_stims_list.selectedItems()[0])
                 if qIndex.row() > 0:
-                    self.loaded_stims_list.model().removeRow(qIndex.row())
+                    main.loaded_stims_list.model().removeRow(qIndex.row())
                     # Display the params of the item above in the list if there is any
-                    items = get_list_widget_items(self.loaded_stims_list)  # items already in the list widget
+                    items = get_list_widget_items(main.loaded_stims_list)  # items already in the list widget
                     if items:
                         # Load from the first item in the list
-                        update_params_widgets(self, items[0])
+                        pass
+                        # bug: update_params_widgets(self, items[0])
                 else:
-                    self.loaded_stims_list.item(0).setText('deleted stim')
+                    main.loaded_stims_list.item(0).setText('deleted stim')
                     # I think that this is where the bug is
-                    self.filename_edit.setText('No stim loaded')
-                    self.current_stim_params_displayed = None
+                    main.filename_edit.setText('No stim loaded')
+                    main.current_stim_params_displayed = None
 
         except:
-            raise Warning('Something went wrong...')
+            Warning('Something went wrong...')
 
-        self.ready = 'Ready'
+        main.ready = 'Ready'
 
     # FILES handling
     @staticmethod
@@ -414,6 +439,20 @@ class App_control():
         for short in sorted(params_files.keys()):
             if not short.split in files_in_list:
                 main.param_files_list.addItem(short)
+
+    @staticmethod
+    def get_audio_files_from_folder(main):
+        # Get all YAML files in the folder
+        files_folder = main.settings['audio_files']
+        params_files = get_files(files_folder, ending='wav')
+
+        # Get list of files already in list widget
+        files_in_list = get_list_widget_items(main.audio_files_list)
+
+        # If we loaded new files add them to the widget
+        for short in sorted(params_files.keys()):
+            if not short.split in files_in_list:
+                main.audio_files_list.addItem(short)
 
     def save_params_yaml_file(self):
         # Save file
@@ -439,10 +478,17 @@ class App_control():
         if main.ready == 'Ready':
             if main.current_stim_params_displayed:
                 main.stim_on = True
-                # get params and call stim generator to calculate stim frames
-                params = main.prepared_stimuli[main.current_stim_params_displayed]
-                calcuated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)
-                main.stim_frames = calcuated_stim.stim_frames
+                if not '.wav' in main.current_stim_params_displayed:  # its a visual stim
+                    # get params and call stim generator to calculate stim frames
+                    params = main.prepared_stimuli[main.current_stim_params_displayed]
+                    calcuated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)
+                    main.stim_frames = calcuated_stim.stim_frames
+                else:
+                    pass  # the stim manager will take care of playing the audio file
+
+    @staticmethod
+    def launch_all_stims(main):
+        pass
 
     @staticmethod
     def launch_benchmark(main):
