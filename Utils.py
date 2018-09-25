@@ -139,35 +139,30 @@ class Stimuli_calculator():
         """
         frames_per_sec = round(1000 / screenMs)
         vel = float(params['velocity'])
-        if float(params['direction']) <= 0:
-            phase_max = -2
-        else:
-            phase_max = 2
 
-        if vel > 0:
-            try:
-                phase_len = frames_per_sec/vel
-                if phase_len > numExpSteps:
-                    phase_len = numExpSteps
-                phase = np.linspace(0, phase_max, phase_len)
-                if len(phase) == 0:
-                    pass
-                repeats = numExpSteps // len(phase)
-                remainder = (numExpSteps / len(phase)) - repeats
-                if repeats >= 1:
-                    phases = np.tile(phase, int(repeats))
-                    if remainder:
-                        phases = np.concatenate((phases, phase[0:round(len(phase)*(1/remainder))]))
-                else:
-                    phases = np.tile(phase, np.ceil(repeats))
-                    phases = phases[0:int(numExpSteps)]
-            except:
-                a = 1
+        # Get phase shift
+        if float(params['direction']) <= 0:
+            phase_max = -1
         else:
-            phases = np.ones((int(numExpSteps), 1))
+            phase_max = 1
+        phase_len = abs(frames_per_sec/vel)  # do a whole period in N frames depending on speed and framerate
+        phase = np.linspace(0, phase_max, phase_len)  # with speed of 1 do 1 period per second
+
+        repeats = int(numExpSteps // phase_len)  # repeat phase to get an array longer than the total number of frames
+        step_size = np.diff(phase)[0]
+        phases = phase.copy()
+        for n in range(repeats+1):
+            to_add = phases[-1]+step_size
+            p = np.add(phase, to_add)
+            phases = np.concatenate((phases, p))
+
+        if len(phases) > numExpSteps:
+            phases = phases[0:numExpSteps]
 
         # Get orientation
         orientation = int(params['orientation'])
+        if vel < 0:
+            orientation += 180  # make it go in the opposite direction
 
         # get colors
         fg = map_color_scale(int(params['fg color']))
