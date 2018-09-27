@@ -2,13 +2,14 @@ from PyQt5.QtWidgets import *
 
 import time
 import sys
-from benchmark_results_analysis import *
+from Utils.benchmark_results_analysis import *
 
 from App_UI import App_layout, App_control
-from Utils import *
+
 
 ####################################################################################################################
 ####################################################################################################################
+
 
 class Main_UI(QWidget):
     def __init__(self):
@@ -121,7 +122,7 @@ class Main_UI(QWidget):
 
     def start_psychopy(self):
         t = time.clock()
-        from psychopy import visual, logging, sound  # This needs to be here, it can't be outside the threat the window is created from
+        from psychopy import visual, logging  # This needs to be here, it can't be outside the threat the window is created from
         print('First psychopy import took: {}'.format((time.clock()-t)*1000))
 
         # Create monitor object
