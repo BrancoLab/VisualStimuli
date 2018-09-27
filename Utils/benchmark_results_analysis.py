@@ -15,10 +15,12 @@ params = {'legend.fontsize': 12,
           'legend.handlelength': 1}
 plt.rcParams.update(params)
 
+
 def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return array[idx]
+
 
 def line_smoother(y, window_size, order, deriv=0, rate=1):
     # Apply a Savitzy-Golay filter to smooth traces
@@ -40,6 +42,7 @@ def line_smoother(y, window_size, order, deriv=0, rate=1):
         lastvals = y[-1] + np.abs(y[-half_window - 1:-1][::-1] - y[-1])
         y = np.concatenate((firstvals, y, lastvals))
         return np.convolve(m[::-1], y, mode='valid')
+
 
 def read_ldr_data():
     th = 4.99631

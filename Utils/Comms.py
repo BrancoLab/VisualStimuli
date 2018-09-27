@@ -1,3 +1,12 @@
+import socket
+import App_UI
+import sys
+import glob
+import serial
+import platform
+import numpy as np
+
+
 """
 CLASS TO HANDLE COMMS WITH MANTIS
 """
@@ -103,3 +112,96 @@ class MantisComms():
             avg = sum(array) / len(array)
             # returns little endian DBL float 8 byte that Mantis can read and plot
             self.conn.sendall(avg)
+
+
+class SerialComms():
+    """  https://www.quora.com/How-can-I-read-analog-input-from-Arduino-in-Python """
+    """ Arduino CODE:
+        #define sensorPin 2
+ 
+        int val = 0;
+         
+        void setup()
+        {
+           Serial.begin(9600);
+        }
+         
+        void loop()
+        {
+            val = analogRead(sensorPin);
+            Serial.println(val);
+        }
+      
+      """
+    def __init__(self, port_name=None):
+        self.baud = 9600
+        # Get the port name
+        if port_name is None:
+            # If the name of the port is not give, get available ports
+            self.get_available_ports()
+        else:
+            self.port_name = port_name
+
+        # Set up serial communication
+        self.setup_ser()
+
+    def get_available_ports(self):
+        """ Lists serial port names
+
+            :raises EnvironmentError:
+                On unsupported or unknown platforms
+            :returns:
+                A list of the serial ports available on the system
+        """
+        if sys.platform.startswith('win'):
+            ports = ['COM%s' % (i + 1) for i in range(256)]
+        else:
+            raise EnvironmentError('Unsupported platform')
+
+        available_ports = []
+        for port in ports:
+            try:
+                s = serial.Serial(port)
+                s.close()
+                available_ports.append(port)
+            except (OSError, serial.SerialException):
+                pass
+
+        print('Available ports:')
+        for pindex, p in enumerate(available_ports):
+            print(' [{}]  - {}'.format(pindex, p))
+        sel = int(input('Please select port number'))
+        self.port_name = available_ports[sel]
+
+    def setup_ser(self):
+        """ Start serial communication with the selected port"""
+        try:
+
+            self.ser = serial.Serial(self.port_name, self.baud)
+            print('Opened serial communication with port {}, baud: {}'.format(self.port_name, self.baud))
+
+            # self.ser = serial.Serial()
+            # self.ser.port = self.port_name
+            # self.ser.baudrate = 57600
+            # self.ser.open()
+        except:
+            print('Could not start serial communication')
+
+    def send_command(self, command):
+        """ Send bytes to arduino """
+        if self.ser.isOpen():
+            self.ser.flushInput()  # flush input buffer, discarding all its contents
+            self.ser.flushOutput()  # flush output buffer, aborting current output
+            # and discard all that is in buffer
+
+            # send bytes
+            self.ser.write(command.encode())
+
+        else:
+            print("cannot open serial port ")
+
+    def read_value(self):
+        """ Read bytes from arduinoo """
+        return self.ser.readline()
+
+

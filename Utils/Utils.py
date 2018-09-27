@@ -8,10 +8,8 @@ import traceback
 import sys
 import numpy as np
 import math
-import socket
 import random
 
-import App_UI
 
 """
 CLASS TO CALCULATE THE STIMULI FRAMES FOR DIFFERENT TYPES OF STIMULI
