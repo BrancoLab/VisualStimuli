@@ -1,8 +1,8 @@
 # DEFINE THE MONITOR
-Name: 'Dell_P2715Q'  # Name of the yml file with the specs of the monitor being used
+Name: 'Yaara_screen'  # Name of the yml file with the specs of the monitor being used
 
 # Define parameters of the GUI window
-position: 4000, 50  # Position of top left corner on main screen, in px
+position: 0, 50  # Position of top left corner on main screen, in px
 width: 1000       # Width of the window in px
 height: 800       # Height of the window in px
 

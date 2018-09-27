@@ -1,0 +1,2 @@
+{Stim type: loom, end_size: '5', expand_time: '500', modality: linear, on_time: '0',
+  pos: '0, 0', repeats: '1', start_size: '0.5', type: loom, units: cm}

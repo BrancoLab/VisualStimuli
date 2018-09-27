@@ -202,6 +202,8 @@ class SerialComms():
 
     def read_value(self):
         """ Read bytes from arduinoo """
+        self.ser.flushInput()
+        self.ser.flushOutput()
         return self.ser.readline()
 
 

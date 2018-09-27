@@ -1,8 +1,10 @@
 from PyQt5.QtWidgets import *
-
+import struct
 import time
 import sys
-from Utils.benchmark_results_analysis import *
+from utils.Utils import *
+from utils.benchmark_results_analysis import *
+from utils.Comms import *
 
 from App_UI import App_layout, App_control
 
@@ -45,6 +47,10 @@ class Main_UI(QWidget):
         # Loop to handle psychopy stim generation
         psychopy_loop_worker = Worker(self.psychopy_loop)
         self.threadpool.start(psychopy_loop_worker)  # Now the psychopy will keep looping
+
+        # Set up arduino commm in a separate loop
+        arduino_loop_worker = Worker(self.arduino_loop)
+        self.threadpool.start(arduino_loop_worker)  # Now the psychopy will keep looping
 
         # Loop to handle mantis comms
         # mantis_loop_worker = Worker(self.mantis_loop)
@@ -116,6 +122,13 @@ class Main_UI(QWidget):
                                   'Number dropped frames': []}
         self.tests_done, self.number_of_tests = 0, 250
 
+        # flag for arduino status
+        self.arduino_status = False
+        self.arduino_prev_value = 0
+        self.arduino_background_colors = dict(background=int(self.settings['default_bg']), shelter=0)
+        self.ignore_UI_luminosity = True
+
+
     ####################################################################################################################
     """  PSYCHOPY functions  """
     ####################################################################################################################
@@ -169,12 +182,14 @@ class Main_UI(QWidget):
     def change_bg_lum(self):
         # Get bg luminosity and update widow
         lum = self.bg_luminosity
+
         if not lum:
             lum = 0
         elif int(lum) > 255:
             lum = 255
         else:
             lum = int(lum)
+
         # update the window color
         lum = map_color_scale(lum)
         prev_lum = self.psypy_window.color[0]
@@ -398,6 +413,33 @@ class Main_UI(QWidget):
         #     t.read
         pass
 
+    def arduino_loop(self):
+        self.arduino_comm = SerialComms('COM5')
+
+        while True:
+
+            self.arduino_manager()
+
+    def arduino_manager(self):
+        try:
+            val = int(self.arduino_comm.read_value())
+            # print(val)
+        except:
+            return
+
+        if val == 1 and self.arduino_prev_value != val:
+            self.arduino_prev_value = val
+            self.arduino_status = not self.arduino_status
+            print('Changed to {}'.format(self.arduino_status))
+        elif val == 0 and self.arduino_prev_value:
+            self.arduino_prev_value = 0
+
+        if self.arduino_status:
+            self.bg_luminosity = self.arduino_background_colors['shelter']
+        else:
+            self.bg_luminosity = self.arduino_background_colors['background']
+
+
     ####################################################################################################################
     """    MAIN LOOP  """
     ####################################################################################################################
@@ -438,8 +480,8 @@ class Main_UI(QWidget):
             if self.ready == 'Ready':
                 App_control.read_from_params_widgets(self)
 
-                # Update background
-                self.change_bg_lum()
+            # Update background
+            self.change_bg_lum()
 
             # Generate, update and clean up stimuli
             self.stim_manager()

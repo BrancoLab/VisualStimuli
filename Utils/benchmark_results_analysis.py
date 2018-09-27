@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import datetime
 import numpy as np
-from nptdms import TdmsFile
+# from nptdms import TdmsFile
 from math import factorial
 
 matplotlib.rc('axes',edgecolor=[0.8, 0.8, 0.8])

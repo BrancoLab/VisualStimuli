@@ -1,0 +1,6 @@
+# DEFINE THE MONITOR
+Name: 'Neurotar'  # Name of the monitor
+PxSize: 1280, 1024    # Size of the monitor in pixel
+Width: 38            # Width of the monitor in cm
+Distance: 30         # Distance from the mouse
+Screen number: 2      # Screen number on your coputer

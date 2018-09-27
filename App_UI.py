@@ -6,7 +6,7 @@ import soundfile as sf
 import numpy as np
 import yaml
 
-from Utils import Stimuli_calculator, get_files, get_list_widget_items, load_yaml, get_param_val, get_param_label
+from utils.Utils import Stimuli_calculator, get_files, get_list_widget_items, load_yaml, get_param_val, get_param_label
 
 ####################################################################################################################
 """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """
@@ -293,7 +293,8 @@ class App_control():
         """
         for param_name, param in main.params_widgets_dict.items():
             if param_name == 'Background Luminosity':
-                main.bg_luminosity = get_param_val(param, string=True)
+                if not main.ignore_UI_luminosity:
+                    main.bg_luminosity = get_param_val(param, string=True)
 
             elif param_name == 'Delay':
                 main.stim_delay = get_param_val(param)
