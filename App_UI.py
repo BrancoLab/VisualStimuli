@@ -6,7 +6,7 @@ import soundfile as sf
 import numpy as np
 import yaml
 
-from utils.Utils import Stimuli_calculator, get_files, get_list_widget_items, load_yaml, get_param_val, get_param_label
+from Utils.Utils import Stimuli_calculator, get_files, get_list_widget_items, load_yaml, get_param_val, get_param_label
 
 ####################################################################################################################
 """    DEFINE THE LAYOUT AND LOOKS OF THE GUI  """

@@ -2,9 +2,9 @@ from PyQt5.QtWidgets import *
 import struct
 import time
 import sys
-from utils.Utils import *
-from utils.benchmark_results_analysis import *
-from utils.Comms import *
+from Utils.Utils import *
+from Utils.benchmark_results_analysis import *
+from Utils.Comms import *
 
 from App_UI import App_layout, App_control
 
@@ -49,8 +49,9 @@ class Main_UI(QWidget):
         self.threadpool.start(psychopy_loop_worker)  # Now the psychopy will keep looping
 
         # Set up arduino commm in a separate loop
-        arduino_loop_worker = Worker(self.arduino_loop)
-        self.threadpool.start(arduino_loop_worker)  # Now the psychopy will keep looping
+        if self.use_arduino:
+            arduino_loop_worker = Worker(self.arduino_loop)
+            self.threadpool.start(arduino_loop_worker)  # Now the psychopy will keep looping
 
         # Loop to handle mantis comms
         # mantis_loop_worker = Worker(self.mantis_loop)
@@ -123,6 +124,7 @@ class Main_UI(QWidget):
         self.tests_done, self.number_of_tests = 0, 250
 
         # flag for arduino status
+        self.use_arduino = False
         self.arduino_status = False
         self.arduino_prev_value = 0
         self.arduino_background_colors = dict(background=int(self.settings['default_bg']), shelter=0)
@@ -262,7 +264,13 @@ class Main_UI(QWidget):
                         if stim is None:
                             self.audio_stim = sound.Sound(self.prepared_stimuli[selected_stim])
                         else:
-                            self.audio_stim = sound.Sound(self.prepared_stimuli[stim])
+                            try:
+                                self.audio_stim = sound.Sound(self.prepared_stimuli[stim.split('__')[1]])
+                            except:
+                                self.audio_stim = sound.Sound(self.prepared_stimuli[stim])
+                        self.audio_stim.hamming = False
+                        vol = self.settings['Volume']
+                        self.audio_stim.volume = vol
                         self.audio_stim.play()
                     except:
                         print('At the moment cannot play more than one audio stim at the same time')

@@ -1,21 +1,21 @@
 # DEFINE THE MONITOR
-Name: 'Yaara_screen'  # Name of the yml file with the specs of the monitor being used
-
+Name: 'Projector_LG'  # Name of the yml file with the specs of the monitor being used
+Volume: 0.1   # volume of audio stims  (between  0 and 1)
 # Define parameters of the GUI window
 position: 0, 50  # Position of top left corner on main screen, in px
 width: 1000       # Width of the window in px
 height: 800       # Height of the window in px
 
 # DEFINE PSYCHOPY WINDOW
-wnd_PxSize: 1920, 1080 # Size of the window in px
+wnd_PxSize: 1920, 2000 # Size of the window in px
 fullscreen: true      # Full-screen mode
 unit: 'cm'             # Default unit of measurement for stims
 default_bg: 128        # Default background color
 
 # DEFINE LDR SQUARE [white/black square above a Light Dependant Resistor to get loom onset times]
 square on: true           # using the square or not
-square pos: 'bottom right'          # Location of the square relative to the screen
-square width: 5           # Square side length in cm
+square pos: 'top left'          # Location of the square relative to the screen
+square width: 10           # Square side length in cm
 square default col: 255  # default color [when the stimulus is off], when stim is on the color is inverted
 
 # DEFINE PATHS

@@ -324,7 +324,7 @@ def get_list_widget_items(list_wdg):
 
 
 def monitor_def(settings):
-    print('Setting up monitor')
+    print('Setting up monitor {}'.format(settings['Name']))
     filename =settings['Name']
     for f in os.listdir(".\\Screens"):
         if filename == f.split('.')[0]:
