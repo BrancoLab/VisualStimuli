@@ -289,23 +289,28 @@ class Main_UI(QWidget):
                 self.change_bg_lum()
 
                 if grating_params.grating_on:
-                    if self.stim is None:
-                        # We need to create the stim
-                        self.stim_timer = time.clock()  # Time lifespan of the stim
-                        self.trialClock = core.Clock()
-                        self.stim = visual.GratingStim(win=self.psypy_window, size=self.stim_frames[2],
-                                                       pos=self.stim_frames[1], ori=grating_params.grating_orientation,
-                                                       color=map_color_scale(grating_params.grating_contrast),
-                                                       sf=params['spatial frequency'], units=params['units'],
-                                                       interpolate=True)
-                    else:
-                        self.stim.ori = grating_params.grating_orientation
-                        if grating_params.grating_direction < 0:
-                            self.stim.ori += 180
+                    self.stim_timer = time.clock()  # Time lifespan of the stim
+                    if not  params['flash_screen']:
+                        if self.stim is None:
+                            # We need to create the stim
+                            self.trialClock = core.Clock()
+                            self.stim = visual.GratingStim(win=self.psypy_window, size=self.stim_frames[2],
+                                                           pos=self.stim_frames[1], ori=grating_params.grating_orientation,
+                                                           color=map_color_scale(grating_params.grating_contrast),
+                                                           sf=params['spatial frequency'], units=params['units'],
+                                                           interpolate=True)
+                        else:
+                            self.stim.ori = grating_params.grating_orientation
+                            if grating_params.grating_direction < 0:
+                                self.stim.ori += 180
 
-                        self.stim.color = map_color_scale(grating_params.grating_contrast)
-                        t = self.trialClock.getTime()
-                        self.stim.phase = t*round(int(params['Velocity']))
+                            self.stim.color = map_color_scale(grating_params.grating_contrast)
+                            t = self.trialClock.getTime()
+                            self.stim.phase = t*round(int(params['Velocity']))
+                    else:
+                        self.bg_luminosity = grating_params.blackout_on
+                        self.change_bg_lum()
+
                 else:
                     if self.stim is not None:
                         self.stim = None

@@ -269,6 +269,7 @@ class Stimuli_calculator():
 
         # Update dataframe
         if grating and grating_variable:
+
             for prop, default in grating_defaults.items():
                 framesdf_column_name = [c for c in framesdf.columns if prop.lower() in c]
                 if len(framesdf_column_name) > 1: raise Warning('Something went wrong')
@@ -280,7 +281,7 @@ class Stimuli_calculator():
                             framesdf.iloc[0:nframes_combined][framesdf_column_name] = default
                             continue
                         else:
-                            raise ValueError('Wront input to stimulus generator')
+                            raise ValueError('Wrong input to stimulus generator')
 
                     limits, period = grating_variable[prop]
                     nframes_period = np.ceil(period/screenMs)
@@ -289,12 +290,21 @@ class Stimuli_calculator():
                     values = np.concatenate((np.zeros(nframes_blackout), values))
                     values = np.concatenate((values, np.zeros(nframes_ultrasound)))
 
-                    try:
-                        framesdf[framesdf_column_name] = values[:len(framesdf)]
-                    except:
-                        a = 1
+                    framesdf[framesdf_column_name] = values[:len(framesdf)]
                 else:
                     framesdf.iloc[0:nframes_combined][framesdf_column_name] = default
+            if params['flash_screen']:
+                period = float(params['flash_screen_period'])
+                nframes_period = int(np.ceil(period / screenMs))
+                n_periods = int(np.ceil(int(params['grating']) / period)/2)
+
+                on_off = np.concatenate((np.ones(nframes_period)*255, np.zeros(nframes_period)))
+                values = np.tile(on_off, n_periods)
+                values = np.concatenate((values, np.zeros(nframes_ultrasound)))
+
+                blkout = framesdf['blackout_on'].values
+                blkout[nframes_blackout:] = values
+                framesdf['blackout_on'] = blkout[:len(framesdf)]
 
         return framesdf, pos, screen_size,  nframes_combined
 

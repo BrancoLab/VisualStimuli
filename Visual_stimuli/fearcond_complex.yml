@@ -20,5 +20,7 @@ audiostim: '.\Audio_files\Clicks_40total, 0.001s on, 250ms off.wav',
 blackout: 4,
 grating: 10,
 ultrasound: 9,
-overlap: 1
+overlap: 1,
+flash_screen: true,
+  flash_screen_period: 0.5
 }
