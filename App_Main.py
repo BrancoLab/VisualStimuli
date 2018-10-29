@@ -205,7 +205,7 @@ class Main_UI(QWidget):
         loom).
         """
         # Need to import from psychopy here or it gives an error. Takes <<1 ms
-        from psychopy import visual
+        from psychopy import visual, core, sound
 
         # Create the visual stimuli
         if self.stim_on:
@@ -258,7 +258,7 @@ class Main_UI(QWidget):
             # play AUDIO
             if 'audio' in params['type'].lower():
                 if self.stim_frame_number == 0:
-                    from psychopy import sound
+                    # from psychopy import sound
                     self.stim_timer = time.clock()  # Time lifespan of the stim
                     try:
                         if stim is None:
@@ -274,6 +274,48 @@ class Main_UI(QWidget):
                         self.audio_stim.play()
                     except:
                         print('At the moment cannot play more than one audio stim at the same time')
+
+            # Play complex fear conditioning stimulus
+            if 'fearcond_copmlex' in params['type'].lower():
+                try:
+                    grating_params = self.stim_frames[0].iloc[self.stim_frame_number]
+                except:
+                    return
+
+                if grating_params.blackout_on:
+                    self.bg_luminosity = 0
+                else:
+                    self.bg_luminosity = self.settings['default_bg']
+                self.change_bg_lum()
+
+                if grating_params.grating_on:
+                    if self.stim is None:
+                        # We need to create the stim
+                        self.stim_timer = time.clock()  # Time lifespan of the stim
+                        self.trialClock = core.Clock()
+                        self.stim = visual.GratingStim(win=self.psypy_window, size=self.stim_frames[2],
+                                                       pos=self.stim_frames[1], ori=grating_params.grating_orientation,
+                                                       color=map_color_scale(grating_params.grating_contrast),
+                                                       sf=params['spatial frequency'], units=params['units'],
+                                                       interpolate=True)
+                    else:
+                        self.stim.ori = grating_params.grating_orientation
+                        if grating_params.grating_direction < 0:
+                            self.stim.ori += 180
+
+                        self.stim.color = map_color_scale(grating_params.grating_contrast)
+                        t = self.trialClock.getTime()
+                        self.stim.phase = t*round(int(params['Velocity']))
+                else:
+                    if self.stim is not None:
+                        self.stim = None
+
+                if grating_params.ultrasound_on:
+                    if self.audio_stim is None:
+                        self.audio_stim = sound.Sound(params['audiostim'])
+                        vol = self.settings['Volume']
+                        self.audio_stim.volume = vol
+                        self.audio_stim.play()
 
             # play DELAY
             if 'delay' in params['type'].lower():
@@ -331,6 +373,9 @@ class Main_UI(QWidget):
             self.stim_frame_number += 1
 
             if not isinstance(self.stim_frames, dict):
+                if isinstance(self.stim_frames[-1], int):
+                    self.stim_frames = list(self.stim_frames)
+                    self.stim_frames[-1] = np.linspace(0,self.stim_frames[-1], self.stim_frames[-1]-1)
                 if self.stim_frame_number == len(self.stim_frames[-1]):
                     # the last elemnt in stim frames is as long as the duration of the stim
                     self.psypy_window.flip()  # Flip here to make sure that last frame lasts as long as the others
@@ -374,6 +419,7 @@ class Main_UI(QWidget):
                     # Update status label
                     self.ready = 'Ready'
                     App_control.update_status_label(self)
+
             else:
                 # if we are playing multiple stims in a row the way the stim managare handles is different from
                 # single stims
@@ -396,14 +442,14 @@ class Main_UI(QWidget):
                         # Update status label
                         self.ready = 'Ready'
                         App_control.update_status_label(self)
-
         else:
             # Call stim creator anyway so that we can update the color of the LDR sqare if one is present
             self.stim_creator()
 
     ####################################################################################################################
-    """  NI BOARD functions  """
+    """  NI BOARD and Arduino functions  """
     ####################################################################################################################
+
     def setup_ni_communication(self):
         """
         Work in progress
@@ -446,7 +492,6 @@ class Main_UI(QWidget):
             self.bg_luminosity = self.arduino_background_colors['shelter']
         else:
             self.bg_luminosity = self.arduino_background_colors['background']
-
 
     ####################################################################################################################
     """    MAIN LOOP  """

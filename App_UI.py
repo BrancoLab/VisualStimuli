@@ -84,8 +84,8 @@ class App_layout():
         self.save_btn.clicked.connect(lambda: App_control.save_params_yaml_file(self))
 
         # Benchmark btn
-        self.bench_btn = QPushButton(text='Bench Mark')
-        self.bench_btn.clicked.connect(lambda: App_control.launch_benchmark(self))
+        # self.bench_btn = QPushButton(text='Bench Mark')
+        # self.bench_btn.clicked.connect(lambda: App_control.launch_benchmark(self))
 
     @staticmethod
     def define_layout(self):
@@ -155,8 +155,8 @@ class App_layout():
         self.setWindowTitle('Review')
 
         # Benchamrk btn
-        self.grid.addWidget(self.bench_btn, 15, 2, 1, 2)
-        self.bench_btn.setObjectName('BennchBtn')
+        # self.grid.addWidget(self.bench_btn, 15, 2, 1, 2)
+        # self.bench_btn.setObjectName('BennchBtn')
 
         self.show()
 
@@ -336,6 +336,8 @@ class App_control():
             params_names = sorted(params.keys())
             params_names = [x for x in params_names if x not in main.ignored_params]  # Don't display all parameters
             assigned = 0  # Keep track of how many parameters have been assigned to a widget
+            ignore_params = ['audiostim', 'blackout', 'grating', 'ultrasound', 'overlap']
+
             for pnum in sorted(main.params_widgets_dict.keys()):
                 if 'Param' in pnum:
                     label = get_param_label(main.params_widgets_dict[pnum], object=True)
@@ -348,6 +350,7 @@ class App_control():
                     else:
                         # Set the widgets texts
                         par = params_names[assigned]
+                        if par in ignore_params: continue
                         label.setText(par)
                         value.setText(str(params[par]))
                     assigned += 1

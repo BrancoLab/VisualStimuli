@@ -1,0 +1,24 @@
+{
+# Important stuff
+Contrast: 'True',
+  Contrast_lims: 200 - 255,
+Direction: 'True',
+  Direction_lims: -1 - 1,
+Orientation: default,
+  Orientation_lims: 0 - 45,
+
+# Stuff
+Stim type: fearcond_copmlex,
+Velocity: '2',
+period: '5',
+spatial frequency: '0.25',
+type: fearcond_copmlex,
+units: deg,
+audiostim: '.\Audio_files\Clicks_40total, 0.001s on, 250ms off.wav',
+
+# Duration in seconds of the various elements
+blackout: 4,
+grating: 10,
+ultrasound: 9,
+overlap: 1
+}

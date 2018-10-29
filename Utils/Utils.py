@@ -9,6 +9,8 @@ import sys
 import numpy as np
 import math
 import random
+import pandas as pd
+pd.options.mode.chained_assignment = None  # default='warn'
 
 
 """
@@ -38,6 +40,10 @@ class Stimuli_calculator():
             self.stim_frames = self.audio_generator(wnd, params, screenMs)
         elif 'delay' in params['type'].lower():
             self.stim_frames = self.delayer(wnd, params, screenMs)
+        elif 'fearcond_copmlex' in params['type'].lower():
+            # Define which aspects of the
+            self.stim_frames = self.complex_fearcon_stim(wnd, params, screenMs, blackout=True, grating=True,
+                                                         ultrasound=True, overlap=True)
 
     def loomer(self, wnd, params, screenMs):
         """
@@ -164,11 +170,6 @@ class Stimuli_calculator():
 
         # get colors
         fg = map_color_scale(int(params['fg color']))
-        #
-        # if params['bg color'] == 'wnd':
-        #     bg = wnd.color[0]
-        # else:
-        #     bg = map_color_scale(int(params['bg color']))
 
         return pos, screen_size, orientation, fg, phases
 
@@ -185,11 +186,127 @@ class Stimuli_calculator():
         frames = np.zeros(numExpSteps)
         return None, frames  # returning None so that the output is a tuple like other functions
 
+    def complex_fearcon_stim(self, wnd: object, params, screenMs: float, blackout: int = False, grating: int = False,
+                             ultrasound: int = False, overlap: int = False) -> object:
+        """ Generate a more complex stimulus (combination of different things) specific to the fear-cond experiments
+         This stimulus includes (optionally):
+         * Blackout period before the proper stimulus onset
+         * Grating with variable (optionally): duration, contrast, direction, orientation
+         * Overlapping ultrasound stimulus"""
+
+
+
+        x, y, width, height = get_position_in_px(wnd, 'top left', 0, return_scree_size=True)
+        if params['units'] == 'cm':
+            pos = (0, 0)
+            screen_size = (width, width)
+        else:
+            pos = (0, 0)
+            screen_size = (width * 2, width * 2)
+
+        screenMs /= 1000
+
+        # Get the total length of the stimulus (# frames) and initialise a pandas df
+        if blackout: nframes_blackout = round(int(params['blackout'])/screenMs)
+        else: nframes_blackout = 0
+
+        if grating: nframes_grating = int(np.ceil(int(params['grating'])/screenMs))
+        else: nframes_grating = 0
+
+        if ultrasound:
+            if overlap:
+                nframes_overlap = round(int(params['overlap'])/screenMs)
+                nframes_ultrasound = round(int(params['ultrasound'])/screenMs) - nframes_overlap
+            else: nframes_ultrasound = round(int(params['ultrasound'])/screenMs)
+        else: nframes_ultrasound = 0
+
+        nframes_combined = nframes_blackout + nframes_grating + nframes_ultrasound
+        features = ['blackout_on', 'grating_on', 'grating_orientation', 'grating_velocity', 'grating_contrast',
+                    'grating_direction', 'ultrasound_on']
+        framesdf = pd.DataFrame(0, index=np.arange(nframes_combined), columns=features)
+
+        # Start folling in framesdf, start with blackout period
+        last_frame = 0
+        if blackout:
+            framesdf.iloc[last_frame:nframes_blackout]['blackout_on'] = 1
+            last_frame = nframes_blackout
+
+        # now the grating
+        if grating:
+            framesdf[last_frame+1:last_frame+nframes_grating]['grating_on'] = 1
+            last_frame = last_frame+nframes_grating
+
+        # And then ultrasound
+        if ultrasound:
+            if overlap: last_frame -= nframes_overlap
+
+            framesdf[last_frame:last_frame+nframes_ultrasound]['ultrasound_on'] = 1
+
+        """ To display on_frames: 
+            import matplotlib.pyplot as plt
+            plt.figure()
+            [plt.plot(framesdf[col]) for col in features if '_on' in col]
+            plt.show()
+        """
+
+        # Now define varying grating frames
+        """ The varying properties of the grating are passed as a dictionary were each property has the structure
+        prop_name: ([x0, x1], s) where x0 and x1 outline the range of values and s the duration of the period in s
+        
+        if a prop is not specified in the dictionary, or if its value is 'default' the default value will be used   
+        
+        the dictionary is created based on user selected values in the GUI    
+        """
+
+        # Default grating variables and params
+        grating_defaults = dict(Orientation=180, Direction=1, Contrast=255)
+        grating_variable = {}
+        period = int(params['period'])
+        for prop in grating_defaults.keys():
+            if params[prop] == 'True':
+                lims = [int(s) for s in params['{}_lims'.format(prop)].split(' - ')]
+                grating_variable[prop] =(lims, period)
+
+        # Update dataframe
+        if grating and grating_variable:
+            for prop, default in grating_defaults.items():
+                framesdf_column_name = [c for c in framesdf.columns if prop.lower() in c]
+                if len(framesdf_column_name) > 1: raise Warning('Something went wrong')
+                else: framesdf_column_name = framesdf_column_name[0]
+
+                if prop in grating_variable.keys():
+                    if isinstance(grating_variable[prop], str):
+                        if 'default' == grating_variable[prop]:
+                            framesdf.iloc[0:nframes_combined][framesdf_column_name] = default
+                            continue
+                        else:
+                            raise ValueError('Wront input to stimulus generator')
+
+                    limits, period = grating_variable[prop]
+                    nframes_period = np.ceil(period/screenMs)
+                    n_periods = int(np.ceil(int(params['grating']) / period))
+                    values = np.tile(np.linspace(limits[0], limits[1], nframes_period), n_periods)
+                    values = np.concatenate((np.zeros(nframes_blackout), values))
+                    values = np.concatenate((values, np.zeros(nframes_ultrasound)))
+
+                    try:
+                        framesdf[framesdf_column_name] = values[:len(framesdf)]
+                    except:
+                        a = 1
+                else:
+                    framesdf.iloc[0:nframes_combined][framesdf_column_name] = default
+
+        return framesdf, pos, screen_size,  nframes_combined
+
+
+
+
 ####################################################################################################################
 ####################################################################################################################
 """    WORKER CLASSES FOR MULTI THREADING   """
 ####################################################################################################################
 ####################################################################################################################
+
 
 class WorkerSignals(QObject):
     '''
@@ -247,6 +364,7 @@ class Worker(QRunnable):
         finally:
             self.signals.finished.emit()  # Done
 
+
 ####################################################################################################################
 ####################################################################################################################
 """    FILES INPUT  OUTPUT   """
@@ -270,6 +388,7 @@ def get_files(fld, ending='yml'):
         if ending in f.split('.')[-1]:
             files_output[f] = os.path.join(fld, f)
     return files_output
+
 
 ####################################################################################################################
 ####################################################################################################################
