@@ -303,7 +303,7 @@ class Stimuli_calculator():
                 values = np.concatenate((values, np.zeros(nframes_ultrasound)))
 
                 blkout = framesdf['blackout_on'].values
-                blkout[nframes_blackout:] = values
+                blkout[nframes_blackout:] = values[:len(blkout[nframes_blackout:])]
                 framesdf['blackout_on'] = blkout[:len(framesdf)]
 
         return framesdf, pos, screen_size,  nframes_combined

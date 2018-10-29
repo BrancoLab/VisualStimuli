@@ -14,7 +14,7 @@ period: '5',
 spatial frequency: '0.25',
 type: fearcond_copmlex,
 units: deg,
-audiostim: '.\Audio_files\Clicks_40total, 0.001s on, 250ms off.wav',
+audiostim: '.\Audio_files\3x3s.wav',
 
 # Duration in seconds of the various elements
 blackout: 4,
