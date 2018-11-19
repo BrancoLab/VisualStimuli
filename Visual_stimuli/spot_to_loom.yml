@@ -1,12 +1,12 @@
 # In this stimulus a spot is created at one edge of the screen, it moves towards the center and then turns into a linear loom
-units: cm          # stimulus unit
+units: deg          # stimulus unit
 
 
 # Square parameters
-initial_pos: 0, 0   # Positions are defined in pixels
+initial_pos: -2000, -1000   # Positions are defined in pixels
 end_pos: 100, 100
-size: 1            #  in cm
-duration: 3000         # seconds
+size: 5            #  in cm
+duration: 4000         # seconds
 
 # Loom parameters
 type: spot_loom          # type of stimulus
@@ -15,7 +15,7 @@ repeats: 1          # Number of times the stimulus is repeated
 
 
 # start_size: 0.5     # start size is the size of the spot
-end_size: 3         # end size, in unit specified below
+end_size: 30         # end size, in unit specified below
 expand_time: 500    # duration of expansion in ms
 on_time: 250       # for how long the stim stays on after it finished expanding
 # pos: 0, 0           # loom position is now the end position of the spot

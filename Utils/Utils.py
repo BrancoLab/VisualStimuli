@@ -158,7 +158,6 @@ class Stimuli_calculator():
 
         return frames
 
-
     def grater(self, wnd, params, screenMs):
         """
         Calculates the data for generating a grating stimulus given some params
