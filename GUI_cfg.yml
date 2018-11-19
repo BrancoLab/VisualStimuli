@@ -4,7 +4,7 @@ Volume: 1   # volume of audio stims  (between  0 and 1)
 # Define parameters of the GUI window
 position: 4000, 50  # Position of top left corner on main screen, in px
 width: 1000       # Width of the window in px
-height: 800       # Height of the window in px
+height: 1200       # Height of the window in px
 
 # DEFINE PSYCHOPY WINDOW
 wnd_PxSize: 1920, 2000 # Size of the window in px

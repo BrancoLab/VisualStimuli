@@ -230,7 +230,7 @@ class Main_UI(QWidget):
                 frames = self.stim_frames[stim]
 
             # Create a LOOM
-            if 'loom' in params['type'].lower():
+            if 'loom' == params['type'].lower():
                 pos = frames[0]
                 radii = frames[1]
 
@@ -240,6 +240,16 @@ class Main_UI(QWidget):
                                               units=params['units'], pos=pos,
                                               lineColor='black', fillColor='black')
                 self.stim.radius = radii[self.stim_frame_number]
+
+            # Create SPOT to LOOM
+            if 'spot_loom' == params['type'].lower():
+                if self.stim is None:
+                    self.stim_timer = time.clock()  # Time lifespan of the stim
+                    self.stim = visual.Circle(self.psypy_window, radius=float(frames[2, 0]), edges=64,
+                                              units=params['units'], pos=(frames[0, 0], frames[1, 0]),
+                                              lineColor='black', fillColor='black')
+                self.stim.pos = (frames[0, self.stim_frame_number], frames[1, self.stim_frame_number])
+                self.stim.radius = frames[2, self.stim_frame_number]
 
             # Create a GRATING
             if 'grating' in params['type'].lower():
@@ -377,6 +387,7 @@ class Main_UI(QWidget):
             # Keep track of our progress as we update the stim
             self.stim_frame_number += 1
 
+            # At conclusion of the stimulus...
             if not isinstance(self.stim_frames, dict):
                 if isinstance(self.stim_frames[-1], int):
                     self.stim_frames = list(self.stim_frames)

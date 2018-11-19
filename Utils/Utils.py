@@ -32,7 +32,7 @@ class Stimuli_calculator():
         self.stim_frames = None  # Initialise variable to avoid problems
 
         # Call subfunctions to generate the stimulus
-        if 'loom' in params['type'].lower():
+        if 'loom' == params['type'].lower():
             self.stim_frames = self.loomer(wnd, params, screenMs)
         elif 'grating' in params['type'].lower():
             self.stim_frames = self.grater(wnd, params, screenMs)
@@ -44,6 +44,8 @@ class Stimuli_calculator():
             # Define which aspects of the
             self.stim_frames = self.complex_fearcon_stim(wnd, params, screenMs, blackout=True, grating=True,
                                                          ultrasound=True, overlap=True)
+        elif 'spot_loom' == params['type'].lower():
+            self.stim_frames = self.spot_to_loomer(wnd, params, screenMs)
 
     def loomer(self, wnd, params, screenMs):
         """
@@ -116,6 +118,46 @@ class Stimuli_calculator():
             raise Warning('Couldnt compute loom parameters')
 
         return pos, radii
+
+    def spot_to_loomer(self, wnd, params, screenMs):
+        """
+            This function calculates the frames for a spot to loom stimulus in which a spot appears on the screen, moves towards the center and turns into a loom.
+            In practice this is just a psychopy circle whose position and size changes over the course of the stimulus.
+        """
+        # Convert spot start and end positions from user defined pixel values to cm
+        positions = []
+        for param_name in ['initial_pos', 'end_pos']:
+            pos = int(params[param_name].split(', ')[0]), int(params[param_name].split(', ')[1])
+            unit = params['units']
+            pos = unit_converter(wnd, pos[0], in_unit='px', out_unit=unit), unit_converter(wnd, pos[1], in_unit='px', out_unit=unit)
+            positions.append(pos)
+        positions = tuple(positions)
+ 
+        # get total duration of the stimulus in number of frames
+        tot_duration = int(params['duration']) + int(params['expand_time']) + int(params['on_time'])
+        tot_steps = int(np.round(tot_duration / screenMs))
+        spot_steps = int(np.round(int(params['duration']) / screenMs))
+        loom_expansion_steps = int(np.round(int(params['expand_time']) / screenMs))
+
+        frames = np.zeros((3, tot_steps))   # 2d array with x,y position and size of the circle at each frame -> to be filled in
+
+        # define position of circle at all frames
+        x_spot_position = np.linspace(positions[0][0], positions[1][0], spot_steps)
+        y_spot_position = np.linspace(positions[0][1], positions[1][1], spot_steps)
+
+
+        frames[0, :spot_steps] = x_spot_position
+        frames[0, spot_steps:] = positions[1][0]  # the spot remains in place when it turns into a loom
+        frames[1, :spot_steps] = y_spot_position
+        frames[1, spot_steps:] = positions[1][1]  
+
+        # define the size at each frame
+        frames[2, :spot_steps] = int(params['size']) # constant
+        frames[2, spot_steps:spot_steps+loom_expansion_steps] = np.linspace(int(params['size']), int(params['end_size']), loom_expansion_steps) # expands
+        frames[1, spot_steps+loom_expansion_steps:] =  int(params['end_size']) # constant
+
+        return frames
+
 
     def grater(self, wnd, params, screenMs):
         """

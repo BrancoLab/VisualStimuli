@@ -66,8 +66,8 @@ class App_layout():
         self.params_widgets_dict[self.delay_label.text()] = param
 
         # Launch ALL btn
-        self.launch_all_btn = QPushButton(text='Launch All Stims')
-        self.launch_all_btn.clicked.connect(lambda: App_control.launch_all_stims(self))
+        # self.launch_all_btn = QPushButton(text='Launch All Stims')
+        # self.launch_all_btn.clicked.connect(lambda: App_control.launch_all_stims(self))
 
         # Launch btn
         self.launch_btn = QPushButton(text='Launch')
@@ -137,8 +137,8 @@ class App_layout():
         self.grid.addWidget(self.delay_edit, 14, 1)
 
         # Launch and launch all btns
-        self.grid.addWidget(self.launch_all_btn, 13, 2, 1, 2)
-        self.launch_all_btn.setObjectName('LaunchBtn')
+       # self.grid.addWidget(self.launch_all_btn, 13, 2, 1, 2)
+       # self.launch_all_btn.setObjectName('LaunchBtn')
         self.grid.addWidget(self.launch_btn, 14, 2, 1, 2)
         self.launch_btn.setObjectName('LaunchBtn')
 
@@ -486,6 +486,7 @@ class App_control():
             f = sf.SoundFile(filepath)
             ms = (len(f)/f.samplerate)*1000
             return ms
+            
         if main.ready == 'Ready':
             if main.current_stim_params_displayed:
                 main.stim_on = True
