@@ -3,10 +3,10 @@ units: deg          # stimulus unit
 
 
 # Square parameters
-initial_pos: -2000, -1000   # Positions are defined in pixels
-end_pos: 100, 100
+initial_pos: 1000, -0   # Positions are defined in pixels
+end_pos: -500, 0
 size: 5            #  in cm
-duration: 4000         # seconds
+duration: 2500         # seconds
 
 # Loom parameters
 type: spot_loom          # type of stimulus
@@ -15,7 +15,7 @@ repeats: 1          # Number of times the stimulus is repeated
 
 
 # start_size: 0.5     # start size is the size of the spot
-end_size: 30         # end size, in unit specified below
-expand_time: 500    # duration of expansion in ms
+end_size: 15         # end size, in unit specified below
+expand_time: 350    # duration of expansion in ms
 on_time: 250       # for how long the stim stays on after it finished expanding
 # pos: 0, 0           # loom position is now the end position of the spot
