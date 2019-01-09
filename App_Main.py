@@ -50,8 +50,11 @@ class Main_UI(QWidget):
 
         # Set up arduino commm in a separate loop
         if self.use_arduino:
-            arduino_loop_worker = Worker(self.arduino_loop)
-            self.threadpool.start(arduino_loop_worker)  # Now the psychopy will keep looping
+            self.arduino_comm = SerialComms(self.arduino_comm)
+            if self.arduino_mode == 'read':
+                # Use a worker to keep reading messages from the arduino
+                arduino_loop_worker = Worker(self.arduino_loop)
+                self.threadpool.start(arduino_loop_worker)  # Now the psychopy will keep looping
 
         # Loop to handle mantis comms
         # mantis_loop_worker = Worker(self.mantis_loop)
@@ -113,23 +116,33 @@ class Main_UI(QWidget):
         """
         self.benchmarking = False
         self.benchmark_results = {'Stim name': None,
-                                  'Monitor name': None,
-                                  'Stim duration': [],
-                                  'Draw duration all': [],
-                                  'Draw duration all auto': [],
-                                  'Draw duration avg': [],
-                                  'Draw duration std': [],
-                                  'Number frames per stim': [],
-                                  'Number dropped frames': []}
+                                    'Monitor name': None,
+                                    'Stim duration': [],
+                                    'Draw duration all': [],
+                                    'Draw duration all auto': [],
+                                    'Draw duration avg': [],
+                                    'Draw duration std': [],
+                                    'Number frames per stim': [],
+                                    'Number dropped frames': []}
         self.tests_done, self.number_of_tests = 0, 250
 
         # flag for arduino status
-        self.use_arduino = False
-        self.arduino_status = False
-        self.arduino_prev_value = 0
-        self.arduino_background_colors = dict(background=int(self.settings['default_bg']), shelter=0)
-        self.ignore_UI_luminosity = True
+        self.use_arduino = True
+        self.arduino_comm = 'COM5'
+        self.arduino_mode = 'command'  # can either be command or read.
+        """ Command is used to send commands to the arduino through the USB, read to read stuff sent from the arduino through the USB"""
+        self.arduino_status = False  # Used in read mode
+        self.arduino_prev_value = 0  # Used in read mode
+        self.arduino_background_colors = dict(background=int(self.settings['default_bg']), shelter=0)  # Used in read mode
+        self.arduino_command = 'p' # Used in command mode
+        self.ignore_UI_luminosity = False   # if true arduino sets the background luminosity, not the user
 
+        print("""
+            Use arduino: {}
+            Comm: {}
+            Arduino mode: {}
+            Ignore UI luminosity: {}
+        """.format(self.use_arduino, self.arduino_comm, self.arduino_mode, self.ignore_UI_luminosity))
 
     ####################################################################################################################
     """  PSYCHOPY functions  """
@@ -156,8 +169,8 @@ class Main_UI(QWidget):
 
         # Create a window, get mseconds per screen refresh
         self.psypy_window = visual.Window([int(size[0]), int(size[1])], monitor=monitor, color=[col, col, col],
-                                          screen=screen_number,
-                                          fullscr=self.settings['fullscreen'], units=self.settings['unit'])
+                                            screen=screen_number,
+                                            fullscr=self.settings['fullscreen'], units=self.settings['unit'])
         avg, std, self.screenMs = self.psypy_window.getMsPerFrame(showVisual=True, msg='Testing refresh rate')
 
         self.psypy_window.refreshThreshold = self.screenMs + 5  # ms per screen + 5 is our threshold for dropped frames
@@ -166,7 +179,7 @@ class Main_UI(QWidget):
         # Get position of the square stimulus [if on]
         if self.settings['square on']:
             self.square_pos = get_position_in_px(self.psypy_window, self.settings['square pos'],
-                                                 self.settings['square width'])
+                                                    self.settings['square width'])
 
         # Update status
         self.ready = 'Ready'
@@ -237,8 +250,8 @@ class Main_UI(QWidget):
                 if self.stim is None:
                     self.stim_timer = time.clock()  # Time lifespan of the stim
                     self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
-                                              units=params['units'], pos=pos,
-                                              lineColor='black', fillColor='black')
+                                                units=params['units'], pos=pos,
+                                                lineColor='black', fillColor='black')
                 self.stim.radius = radii[self.stim_frame_number]
 
             # Create SPOT to LOOM
@@ -246,8 +259,8 @@ class Main_UI(QWidget):
                 if self.stim is None:
                     self.stim_timer = time.clock()  # Time lifespan of the stim
                     self.stim = visual.Circle(self.psypy_window, radius=float(frames[2, 0]), edges=64,
-                                              units=params['units'], pos=(frames[0, 0], frames[1, 0]),
-                                              lineColor='black', fillColor='black')
+                                                units=params['units'], pos=(frames[0, 0], frames[1, 0]),
+                                                lineColor='black', fillColor='black')
                 self.stim.pos = (frames[0, self.stim_frame_number], frames[1, self.stim_frame_number])
                 self.stim.radius = frames[2, self.stim_frame_number]
 
@@ -262,7 +275,7 @@ class Main_UI(QWidget):
                 if self.stim is None:
                     self.stim_timer = time.clock()  # Time lifespan of the stim
                     self.stim = visual.GratingStim(win=self.psypy_window, size=size, pos=pos, ori=ori, color=fg_col,
-                                                   sf=params['spatial frequency'], units=params['units'], interpolate=True)
+                                                    sf=params['spatial frequency'], units=params['units'], interpolate=True)
                 self.stim.phase = phases[self.stim_frame_number]
 
             # play AUDIO
@@ -305,10 +318,10 @@ class Main_UI(QWidget):
                             # We need to create the stim
                             self.trialClock = core.Clock()
                             self.stim = visual.GratingStim(win=self.psypy_window, size=self.stim_frames[2],
-                                                           pos=self.stim_frames[1], ori=grating_params.grating_orientation,
-                                                           color=map_color_scale(grating_params.grating_contrast),
-                                                           sf=params['spatial frequency'], units=params['units'],
-                                                           interpolate=True)
+                                                            pos=self.stim_frames[1], ori=grating_params.grating_orientation,
+                                                            color=map_color_scale(grating_params.grating_contrast),
+                                                            sf=params['spatial frequency'], units=params['units'],
+                                                            interpolate=True)
                         else:
                             self.stim.ori = grating_params.grating_orientation
                             if grating_params.grating_direction < 0:
@@ -345,8 +358,8 @@ class Main_UI(QWidget):
 
             if self.square is None:
                 self.square = visual.Rect(self.psypy_window, width=self.settings['square width'],
-                                      height=self.settings['square width'], pos=self.square_pos, units='cm',
-                                      lineColor=[col, col, col], fillColor=[col, col, col])
+                                        height=self.settings['square width'], pos=self.square_pos, units='cm',
+                                        lineColor=[col, col, col], fillColor=[col, col, col])
             else:
                 self.square.setFillColor([col, col, col])
             self.square.draw()
@@ -365,7 +378,7 @@ class Main_UI(QWidget):
                 This is due to the fact that the frames are generated in another thread and the
                 that might have not been done by the time that stim_manager is called in the main loop
                 Just exit the function to avoid problems. Alternatively it could be an audio stim, in which case
-                 just play the .wav file """
+                just play the .wav file """
                 return
 
             # If stim is just being created, start clock to time its duration
@@ -403,7 +416,7 @@ class Main_UI(QWidget):
                     # Keep track of time it took to update (draw) each frame
                     self.draws = np.array(self.psypy_window.frameIntervals)
                     print('     ... number of exp frames {}, number of intervals {}'.format(self.stim_frame_number,
-                                                                                   len(self.psypy_window.frameIntervals)))
+                                                                                    len(self.psypy_window.frameIntervals)))
                     self.psypy_window.frameIntervals = []
                     self.psypy_window.recordFrameIntervals = False
 
@@ -484,30 +497,36 @@ class Main_UI(QWidget):
         pass
 
     def arduino_loop(self):
-        self.arduino_comm = SerialComms('COM5')
-
+        """[This loop keeps reading the signals coming from arduino and changes the background luminance accordingly]
+        """
         while True:
-
             self.arduino_manager()
 
     def arduino_manager(self):
-        try:
-            val = int(self.arduino_comm.read_value())
-            # print(val)
-        except:
-            return
+            """
+                The following code handles the change of the background luminance based on a signal received from the arduino
+                This code was developed for and used by Yaara
+            """
+            if not self.ignore_UI_luminosity:
+                raise ValueError('For the code to work properly the UI luminosity needs to be overridden')
+            
+            try:
+                val = int(self.arduino_comm.read_value())
+            except:
+                return
 
-        if val == 1 and self.arduino_prev_value != val:
-            self.arduino_prev_value = val
-            self.arduino_status = not self.arduino_status
-            print('Changed to {}'.format(self.arduino_status))
-        elif val == 0 and self.arduino_prev_value:
-            self.arduino_prev_value = 0
+            if val == 1 and self.arduino_prev_value != val:
+                self.arduino_prev_value = val
+                self.arduino_status = not self.arduino_status
+                print('Changed to {}'.format(self.arduino_status))
+            elif val == 0 and self.arduino_prev_value:
+                self.arduino_prev_value = 0
 
-        if self.arduino_status:
-            self.bg_luminosity = self.arduino_background_colors['shelter']
-        else:
-            self.bg_luminosity = self.arduino_background_colors['background']
+            if self.arduino_status:
+                self.bg_luminosity = self.arduino_background_colors['shelter']
+            else:
+                self.bg_luminosity = self.arduino_background_colors['background']
+        
 
     ####################################################################################################################
     """    MAIN LOOP  """

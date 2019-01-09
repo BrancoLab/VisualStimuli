@@ -118,21 +118,21 @@ class SerialComms():
     """  https://www.quora.com/How-can-I-read-analog-input-from-Arduino-in-Python """
     """ Arduino CODE:
         #define sensorPin 2
- 
+
         int val = 0;
-         
+        
         void setup()
         {
-           Serial.begin(9600);
+            Serial.begin(9600);
         }
-         
+        
         void loop()
         {
             val = analogRead(sensorPin);
             Serial.println(val);
         }
-      
-      """
+    
+    """
     def __init__(self, port_name=None):
         self.baud = 9600
         # Get the port name
