@@ -1,0 +1,12 @@
+type: loom          # type of stimulus
+modality: linear    # loom expansion mode
+repeats: 1          # Number of times the stimulus is repeated
+
+
+start_size: 5     # start size
+end_size: 15         # end size, in unit specified below
+expand_time: 350    # duration of expansion in ms
+on_time: 250       # for how long the stim stays on after it finished expanding
+pos: -500, 0           # position on the screent, in arbitrary unit
+
+units: deg          # stimulus unit

@@ -10,12 +10,12 @@ height: 1200       # Height of the window in px
 wnd_PxSize: 1920, 2000 # Size of the window in px
 fullscreen: true      # Full-screen mode
 unit: 'cm'             # Default unit of measurement for stims
-default_bg: 128        # Default background color
+default_bg: 10        # Default background color
 
 # DEFINE LDR SQUARE [white/black square above a Light Dependant Resistor to get loom onset times]
 square on: true           # using the square or not
 square pos: 'top left'          # Location of the square relative to the screen
-square width: 7           # Square side length in cm
+square width: 8           # Square side length in cm
 square default col: 255  # default color [when the stimulus is off], when stim is on the color is inverted
 
 # DEFINE PATHS

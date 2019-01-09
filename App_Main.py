@@ -128,7 +128,7 @@ class Main_UI(QWidget):
         self.arduino_status = False
         self.arduino_prev_value = 0
         self.arduino_background_colors = dict(background=int(self.settings['default_bg']), shelter=0)
-        self.ignore_UI_luminosity = True
+        self.ignore_UI_luminosity = False
 
 
     ####################################################################################################################
@@ -184,7 +184,6 @@ class Main_UI(QWidget):
     def change_bg_lum(self):
         # Get bg luminosity and update widow
         lum = self.bg_luminosity
-
         if not lum:
             lum = 0
         elif int(lum) > 255:
@@ -192,11 +191,12 @@ class Main_UI(QWidget):
         else:
             lum = int(lum)
 
+        # lum = 100
         # update the window color
         lum = map_color_scale(lum)
         prev_lum = self.psypy_window.color[0]
-        if not prev_lum == lum:  # only update the background color if we actually changed it
-            self.psypy_window.setColor([lum, lum, lum])
+        # if not prev_lum == lum:  # only update the background color if we actually changed it
+        self.psypy_window.setColor([lum, lum, lum])
 
     def stim_creator(self, stim=None):
         """
@@ -491,6 +491,7 @@ class Main_UI(QWidget):
             self.arduino_manager()
 
     def arduino_manager(self):
+        return
         try:
             val = int(self.arduino_comm.read_value())
             # print(val)
