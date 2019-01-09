@@ -247,11 +247,16 @@ class Main_UI(QWidget):
                 pos = frames[0]
                 radii = frames[1]
 
+                color = int(params['color'])
+                if color < 0: color=0
+                elif color > 255: color=255
+
                 if self.stim is None:
                     self.stim_timer = time.clock()  # Time lifespan of the stim
                     self.stim = visual.Circle(self.psypy_window, radius=float(params['start_size']), edges=64,
-                                                units=params['units'], pos=pos,
-                                                lineColor='black', fillColor='black')
+                                                units=params['units'], pos=pos, fillColorSpace='rgb255',
+                                                lineColorSpace='rgb255',
+                                                lineColor=color, fillColor=color)
                 self.stim.radius = radii[self.stim_frame_number]
 
             # Create SPOT to LOOM
