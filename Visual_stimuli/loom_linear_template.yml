@@ -1,3 +1,15 @@
-{Stim type: loom, color: '0', end_size: '17', expand_time: '360', modality: linear,
-  off_time: '500', on_time: '250', pos: '-350, 0', repeats: '5', start_size: '2.5',
-  type: loom, units: deg}
+
+type: loom          # type of stimulus
+modality: linear    # loom expansion mode
+repeats: 1          # Number of times the stimulus is repeated
+off_time: 250       # Time in ms between repeats
+color: 0            # color of the loom, between 0-255 [0=black, 255=white]
+
+
+start_size: 0.5     # start size
+end_size: 5         # end size, in unit specified below
+expand_time: 500    # duration of expansion in ms
+on_time: 0       # for how long the stim stays on after it finished expanding
+pos: 0, 0           # position on the screent, in arbitrary unit
+
+units: deg          # stimulus unit

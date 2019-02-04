@@ -568,6 +568,7 @@ class App_control():
     def arduino_command(main):
         main.arduino_comm.send_command(main.arduino_command)
 
+
     @staticmethod
     def launch_benchmark(main):
         main.benchmarking = True

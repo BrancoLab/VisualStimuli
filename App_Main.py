@@ -129,12 +129,14 @@ class Main_UI(QWidget):
         # flag for arduino status
         self.use_arduino = True
         self.arduino_comm = self.settings['arduino_comm']
+
         self.arduino_mode = 'command'  # can either be command or read.
         """ Command is used to send commands to the arduino through the USB, read to read stuff sent from the arduino through the USB"""
         self.arduino_status = False  # Used in read mode
         self.arduino_prev_value = 0  # Used in read mode
         self.arduino_background_colors = dict(background=int(self.settings['default_bg']), shelter=0)  # Used in read mode
         self.arduino_command = self.settings['arduino_command']  # Used in command mode
+
         self.ignore_UI_luminosity = False   # if true arduino sets the background luminosity, not the user
 
         print("""
