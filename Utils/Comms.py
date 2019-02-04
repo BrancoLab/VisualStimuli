@@ -6,7 +6,6 @@ import serial
 import platform
 import numpy as np
 
-
 """
 CLASS TO HANDLE COMMS WITH MANTIS
 """
@@ -118,21 +117,21 @@ class SerialComms():
     """  https://www.quora.com/How-can-I-read-analog-input-from-Arduino-in-Python """
     """ Arduino CODE:
         #define sensorPin 2
- 
+
         int val = 0;
-         
+        
         void setup()
         {
-           Serial.begin(9600);
+            Serial.begin(9600);
         }
-         
+        
         void loop()
         {
             val = analogRead(sensorPin);
             Serial.println(val);
         }
-      
-      """
+    
+    """
     def __init__(self, port_name=None):
         self.baud = 9600
         # Get the port name
@@ -185,6 +184,7 @@ class SerialComms():
             # self.ser.baudrate = 57600
             # self.ser.open()
         except:
+            raise ValueError('Could not set up serial')
             print('Could not start serial communication')
 
     def send_command(self, command):
@@ -196,7 +196,7 @@ class SerialComms():
 
             # send bytes
             self.ser.write(command.encode())
-
+            print('Sent Command: ', command)
         else:
             print("cannot open serial port ")
 
@@ -206,4 +206,6 @@ class SerialComms():
         self.ser.flushOutput()
         return self.ser.readline()
 
-
+if __name__ == "__main__":
+    comm = SerialComms()
+    comm.get_available_ports()

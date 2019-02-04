@@ -43,7 +43,7 @@ class Stimuli_calculator():
         elif 'fearcond_copmlex' in params['type'].lower():
             # Define which aspects of the
             self.stim_frames = self.complex_fearcon_stim(wnd, params, screenMs, blackout=True, grating=True,
-                                                         ultrasound=True, overlap=True)
+                                                            ultrasound=True, overlap=True)
         elif 'spot_loom' == params['type'].lower():
             self.stim_frames = self.spot_to_loomer(wnd, params, screenMs)
 
@@ -62,7 +62,7 @@ class Stimuli_calculator():
         pos = int(params['pos'].split(', ')[0]), int(params['pos'].split(', ')[1])
         unit = params['units']
         pos = unit_converter(wnd, pos[0], in_unit='px', out_unit=unit), unit_converter(wnd, pos[1],
-                                                                                       in_unit='px', out_unit=unit)
+                                                                                        in_unit='px', out_unit=unit)
 
         # Prepare radii steps
         if params['modality'] == 'linear':
@@ -82,6 +82,12 @@ class Stimuli_calculator():
 
             # Repeat the stimulus N times
             if int(params['repeats']) > 0:
+                # Add  inter stimuli interval
+                isi = int(params['off_time'])
+                if isi > 0:
+                    numOffSteps = int(np.round(isi / screenMs))
+                    off_radii = np.zeros(numOffSteps)
+                    radii = np.append(radii, off_radii)
                 radii = np.tile(radii, int(params['repeats']))
 
         elif params['modality'] == 'exponential':

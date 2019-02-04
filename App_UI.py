@@ -65,9 +65,12 @@ class App_layout():
         param = {self.delay_label.text(): [self.delay_label, self.delay_edit]}
         self.params_widgets_dict[self.delay_label.text()] = param
 
-        # Launch ALL btn
+        # Launch ALL btn - replaced by arduino command button
         # self.launch_all_btn = QPushButton(text='Launch All Stims')
         # self.launch_all_btn.clicked.connect(lambda: App_control.launch_all_stims(self))
+        # arduino btn
+        self.arduino_btn = QPushButton(text='Trigger Arduino')
+        self.arduino_btn.clicked.connect(lambda: App_control.arduino_command(self))
 
         # Launch btn
         self.launch_btn = QPushButton(text='Launch')
@@ -137,8 +140,9 @@ class App_layout():
         self.grid.addWidget(self.delay_edit, 14, 1)
 
         # Launch and launch all btns
-       # self.grid.addWidget(self.launch_all_btn, 13, 2, 1, 2)
-       # self.launch_all_btn.setObjectName('LaunchBtn')
+        self.grid.addWidget(self.arduino_btn, 13, 2, 1, 2)
+        self.arduino_btn.setObjectName('ArduinoBtn')
+
         self.grid.addWidget(self.launch_btn, 14, 2, 1, 2)
         self.launch_btn.setObjectName('LaunchBtn')
 
@@ -151,7 +155,7 @@ class App_layout():
         self.setLayout(self.grid)
         self.setContentsMargins(50, 10, 10, 25)
         self.setGeometry(int(self.settings['position'].split(', ')[0]), int(self.settings['position'].split(', ')[1]),
-                         int(self.settings['width']), int(self.settings['height']))
+                            int(self.settings['width']), int(self.settings['height']))
         self.setWindowTitle('Review')
 
         # Benchamrk btn
@@ -185,6 +189,14 @@ class App_layout():
                             background-color: #7ba1d6;
                             border: 4px solid #8e9092;
                         }
+
+                        QPushButton#ArduinoBtn {
+                            color: #ffffff;
+                            font-size: 18pt;
+                            background-color: #00878F;
+                            border: 4px solid #ffffff;
+                        }
+
 
                         QPushButton#BennchBtn {
                             color: #000000;
@@ -255,7 +267,7 @@ class App_layout():
                             border-radius: 4px;
 
                         }
-                                       """)
+                                        """)
 
 
 class App_control():
@@ -551,6 +563,10 @@ class App_control():
 
             main.stim_frames = all_frames
             main.stim_on = True
+
+    @staticmethod
+    def arduino_command(main):
+        main.arduino_comm.send_command(main.arduino_command)
 
     @staticmethod
     def launch_benchmark(main):
