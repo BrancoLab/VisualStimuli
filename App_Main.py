@@ -267,7 +267,7 @@ class Main_UI(QWidget):
                     self.stim_timer = time.clock()  # Time lifespan of the stim
                     self.stim = visual.Circle(self.psypy_window, radius=float(frames[2, 0]), edges=64,
                                                 units=params['units'], pos=(frames[0, 0], frames[1, 0]),
-                                                lineColor='black', fillColor='black')
+                                                lineColor='#000000', fillColor='#000000')
                 self.stim.pos = (frames[0, self.stim_frame_number], frames[1, self.stim_frame_number])
                 self.stim.radius = frames[2, self.stim_frame_number]
 
