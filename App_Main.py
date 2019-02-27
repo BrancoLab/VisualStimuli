@@ -127,7 +127,7 @@ class Main_UI(QWidget):
         self.tests_done, self.number_of_tests = 0, 250
 
         # flag for arduino status
-        self.use_arduino = True
+        self.use_arduino = self.settings['use_arduino']
         self.arduino_comm = self.settings['arduino_comm']
 
         self.arduino_mode = 'command'  # can either be command or read.
