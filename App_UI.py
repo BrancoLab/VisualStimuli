@@ -16,6 +16,10 @@ from Utils.Utils import Stimuli_calculator, get_files, get_list_widget_items, lo
 class App_layout():
     @staticmethod
     def create_widgets(self):
+        """[Creates all the buttons and widgets for the GUI. 
+                !!!! self is not in reference to App_layout class but rather to Main_UI class that calls this methods]
+        """
+
         # Take care of the layout
         self.grid = QGridLayout()
         self.grid.setSpacing(25)
@@ -65,12 +69,10 @@ class App_layout():
         param = {self.delay_label.text(): [self.delay_label, self.delay_edit]}
         self.params_widgets_dict[self.delay_label.text()] = param
 
-        # Launch ALL btn - replaced by arduino command button
-        # self.launch_all_btn = QPushButton(text='Launch All Stims')
-        # self.launch_all_btn.clicked.connect(lambda: App_control.launch_all_stims(self))
         # arduino btn
-        self.arduino_btn = QPushButton(text='Trigger Arduino')
-        self.arduino_btn.clicked.connect(lambda: App_control.arduino_command(self))
+        if self.use_arduino and not self.arduino_slave_mode:  # only show the trigger arduino button if relevant
+            self.arduino_btn = QPushButton(text='Trigger Arduino')
+            self.arduino_btn.clicked.connect(lambda: App_control.arduino_command(self))
 
         # Launch btn
         self.launch_btn = QPushButton(text='Launch')

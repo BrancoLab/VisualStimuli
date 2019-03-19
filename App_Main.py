@@ -72,6 +72,8 @@ class Main_UI(QWidget):
         App_control.get_audio_files_from_folder(self)
 
     def initialise_variables(self):
+        # initialise user name
+        self.user = settings['user_name']
         # Flag to signal when app is ready to launch a stim
         self.ready = False
 
@@ -129,9 +131,12 @@ class Main_UI(QWidget):
         # flag for arduino status
         self.use_arduino = self.settings['use_arduino']
         self.arduino_comm = self.settings['arduino_comm']
-
-        self.arduino_mode = 'command'  # can either be command or read.
-        """ Command is used to send commands to the arduino through the USB, read to read stuff sent from the arduino through the USB"""
+        self.arduino_slave_mode = self.settings['arduino_slave_mode']
+        if not self.arduino_slave_mode:
+            self.arduino_mode = 'command'  # can either be command or read.
+        else:
+            self.arduino_mode = 'read' # ? Command is used to send commands to the arduino through the USB, read to read stuff sent from the arduino through the USB
+        
         self.arduino_status = False  # Used in read mode
         self.arduino_prev_value = 0  # Used in read mode
         self.arduino_background_colors = dict(background=int(self.settings['default_bg']), shelter=0)  # Used in read mode
@@ -142,9 +147,10 @@ class Main_UI(QWidget):
         print("""
             Use arduino: {}
             Comm: {}
+            Arduino slave mode: {}
             Arduino mode: {}
             Ignore UI luminosity: {}
-        """.format(self.use_arduino, self.arduino_comm, self.arduino_mode, self.ignore_UI_luminosity))
+        """.format(self.use_arduino, self.arduino_comm, self.arduino_slave_mode, self.arduino_mode, self.ignore_UI_luminosity))
 
     ####################################################################################################################
     """  PSYCHOPY functions  """
@@ -486,23 +492,6 @@ class Main_UI(QWidget):
     """  NI BOARD and Arduino functions  """
     ####################################################################################################################
 
-    def setup_ni_communication(self):
-        """
-        Work in progress
-        """
-        """"""
-        # import PyDAQmx as nidaq
-        #
-        # with nidaq.Task() as t:
-        #     t.ao_channels.add_ao_voltage_chan('Dev1/ao0')
-        #     t.write(5.0)
-        #     t.CreateAIVoltageChan("Dev1/ai0", None, nidaq.DAQmx_Val_Diff, 0, 10, nidaq.DAQmx_Val_Volts, None)
-        #     t.CfgSampClkTiming("", 1000, nidaq.DAQmx_Val_Rising, nidaq.DAQmx_Val_FiniteSamps, 5000)
-        #     t.StartTask()
-        #
-        #     t.read
-        pass
-
     def arduino_loop(self):
         """[This loop keeps reading the signals coming from arduino and changes the background luminance accordingly]
         """
@@ -522,17 +511,26 @@ class Main_UI(QWidget):
             except:
                 return
 
-            if val == 1 and self.arduino_prev_value != val:
-                self.arduino_prev_value = val
-                self.arduino_status = not self.arduino_status
-                print('Changed to {}'.format(self.arduino_status))
-            elif val == 0 and self.arduino_prev_value:
-                self.arduino_prev_value = 0
+            """ the code below is for Yaara's set up """
+            if self.user == 'Yaara':
+                if val == 1 and self.arduino_prev_value != val:
+                    self.arduino_prev_value = val
+                    self.arduino_status = not self.arduino_status
+                    print('Changed to {}'.format(self.arduino_status))
+                elif val == 0 and self.arduino_prev_value:
+                    self.arduino_prev_value = 0
 
-            if self.arduino_status:
-                self.bg_luminosity = self.arduino_background_colors['shelter']
+                if self.arduino_status:
+                    self.bg_luminosity = self.arduino_background_colors['shelter']
+                else:
+                    self.bg_luminosity = self.arduino_background_colors['background']
+            elif self.user == 'Sarah':
+                if val == 1 and self.read == 'Ready': # ? if we recieve the signal and we are not currently running a stimulus, launcha a stim
+                    App_control.launch_stim(self)
             else:
-                self.bg_luminosity = self.arduino_background_colors['background']
+                raise ValueError('User: {}  --- not recognised'.format(self.user))
+
+
         
 
     ####################################################################################################################

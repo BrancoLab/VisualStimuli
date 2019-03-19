@@ -1,9 +1,12 @@
+# USER NAME
+user_name: 'Sarah'
+
 # DEFINE THE MONITOR
-Name: 'Projector_LG'  # Name of the yml file with the specs of the monitor being used
+Name: 'Dell_P2715Q'  # Name of the yml file with the specs of the monitor being used
 Volume: 1   # volume of audio stims  (between  0 and 1)
 
 # Define parameters of the GUI window
-position: 50, 50 # Position of top left corner on main screen, in px
+position: 4000, 50 # Position of top left corner on main screen, in px
 width: 1000       # Width of the window in px
 height: 1200       # Height of the window in px
 
@@ -24,6 +27,7 @@ stim_configs: '.\Visual_stimuli'
 audio_files: '.\Audio_files'
 
 # DEFINE ARDUINO COMMUNICATION
-use_arduino: True
+use_arduino: False
+arduino_slave_mode: True   # in slave mode the gui waits for a command from arduino, otherwise it will send commands TO the arduino
 arduino_comm : 'COM8'
 arduino_command: 'p'

@@ -51,7 +51,6 @@ class Stimuli_calculator():
         """
         Calculates the position of the loom, for how many screen frames it will stay on and what the radius will be
         at each frame
-
         :param wnd:  psychopy window
         :param params:   stim params [from YAML file]
         :param screenMs:  Ms for each screen refresh
