@@ -142,8 +142,9 @@ class App_layout():
         self.grid.addWidget(self.delay_edit, 14, 1)
 
         # Launch and launch all btns
-        self.grid.addWidget(self.arduino_btn, 13, 2, 1, 2)
-        self.arduino_btn.setObjectName('ArduinoBtn')
+        if self.use_arduino and not self.arduino_slave_mode:
+            self.grid.addWidget(self.arduino_btn, 13, 2, 1, 2)
+            self.arduino_btn.setObjectName('ArduinoBtn')
 
         self.grid.addWidget(self.launch_btn, 14, 2, 1, 2)
         self.launch_btn.setObjectName('LaunchBtn')

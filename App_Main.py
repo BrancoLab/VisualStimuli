@@ -73,7 +73,7 @@ class Main_UI(QWidget):
 
     def initialise_variables(self):
         # initialise user name
-        self.user = settings['user_name']
+        self.user = self.settings['user_name']
         # Flag to signal when app is ready to launch a stim
         self.ready = False
 
