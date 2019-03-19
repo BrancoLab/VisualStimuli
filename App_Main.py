@@ -52,6 +52,7 @@ class Main_UI(QWidget):
         if self.use_arduino:
             self.arduino_comm = SerialComms(self.arduino_comm)
             if self.arduino_mode == 'read':
+                print("SETTING UP ARDUINO IN READ MODE")
                 # Use a worker to keep reading messages from the arduino
                 arduino_loop_worker = Worker(self.arduino_loop)
                 self.threadpool.start(arduino_loop_worker)  # Now the psychopy will keep looping
@@ -503,15 +504,16 @@ class Main_UI(QWidget):
                 The following code handles the change of the background luminance based on a signal received from the arduino
                 This code was developed for and used by Yaara
             """
-            if not self.ignore_UI_luminosity:
+            if not self.ignore_UI_luminosity and self.user == 'Yaara':
                 raise ValueError('For the code to work properly the UI luminosity needs to be overridden')
             
             try:
                 val = int(self.arduino_comm.read_value())
+                print(val)
             except:
                 return
 
-            """ the code below is for Yaara's set up """
+
             if self.user == 'Yaara':
                 if val == 1 and self.arduino_prev_value != val:
                     self.arduino_prev_value = val
@@ -524,8 +526,9 @@ class Main_UI(QWidget):
                     self.bg_luminosity = self.arduino_background_colors['shelter']
                 else:
                     self.bg_luminosity = self.arduino_background_colors['background']
+
             elif self.user == 'Sarah':
-                if val == 1 and self.read == 'Ready': # ? if we recieve the signal and we are not currently running a stimulus, launcha a stim
+                if val == 1 and self.ready == 'Ready': # ? if we recieve the signal and we are not currently running a stimulus, launcha a stim
                     App_control.launch_stim(self)
             else:
                 raise ValueError('User: {}  --- not recognised'.format(self.user))
