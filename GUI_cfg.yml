@@ -1,6 +1,7 @@
 # DEFINE THE MONITOR
 Name: 'Projector_LG'  # Name of the yml file with the specs of the monitor being used
 Volume: 1   # volume of audio stims  (between  0 and 1)
+
 # Define parameters of the GUI window
 position: 50, 50 # Position of top left corner on main screen, in px
 width: 1000       # Width of the window in px
@@ -23,5 +24,6 @@ stim_configs: '.\Visual_stimuli'
 audio_files: '.\Audio_files'
 
 # DEFINE ARDUINO COMMUNICATION
+use_arduino: True
 arduino_comm : 'COM8'
 arduino_command: 'p'
