@@ -1,5 +1,5 @@
 # USER NAME
-user_name: 'Sarah'
+user_name: 'Federico'
 
 # DEFINE THE MONITOR
 Name: 'Projector_LG_bigrig'  # Name of the yml file with the specs of the monitor being used
@@ -7,17 +7,17 @@ Volume: 1   # volume of audio stims  (between  0 and 1)
 
 # Define parameters of the GUI window
 position: 50, 50 # Position of top left corner on main screen, in px
-width: 1000       # Width of the window in px
+width: 1150       # Width of the window in px
 height: 1200       # Height of the window in px
 
 # DEFINE PSYCHOPY WINDOW
 wnd_PxSize: 1920, 2000 # Size of the window in px
 fullscreen: False      # Full-screen mode
-unit: 'cm'             # Default unit of measurement for stims
-default_bg: 255      # Default background color
+unit: 'deg'             # Default unit of measurement for stims
+default_bg: 125      # Default background color
 
 # DEFINE LDR SQUARE [white/black square above a Light Dependant Resistor to get loom onset times]
-square on: False           # using the square or not
+square on: True           # using the square or not
 square pos: 'top right'    # Location of the square relative to the screen
 square width: 40          # Square side length in cm
 square default col: 0  # default color [when the stimulus is off], when stim is on the color is inverted
@@ -31,3 +31,10 @@ use_arduino: False
 arduino_slave_mode: False   # in slave mode the gui waits for a command from arduino, otherwise it will send commands TO the arduino
 arduino_comm : 'COM8'
 arduino_command: 'p'
+
+
+# STIMULI LOG
+# Save as a .yml file all the stimuli presented during a session (including params)
+log_folder: "H:\\VTE"
+log_session_name: "test"
+

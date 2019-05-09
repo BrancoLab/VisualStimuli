@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import math
 
 
 """
@@ -64,13 +64,30 @@ class Calculator:
         
         """.format(bg, loom, contrast))
 
+
+    def loom_angle_calculator(self, diameter, distance):
+        theta = round(math.degrees(math.atan((diameter*0.5)/distance)),2) * 2
+        print("""
+            Loom angle for:
+                - diameter:  {}
+                - distance:  {}
+
+                ---------------------
+
+                --> {}
+        
+        """.format(diameter, distance, theta))
+
+
 if __name__ == "__main__":
     c = Calculator()
 
-    c.plot("Lux")
-    c.plot("LDR readout - Python")
+    # c.plot("Lux")
+    # c.plot("LDR readout - Python")
 
     c.contrast_calc(125, 10)
+
+    # c.loom_angle_calculator(90, 170)
 
     plt.show()
 

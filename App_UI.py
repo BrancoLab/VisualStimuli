@@ -5,6 +5,7 @@ import os
 import soundfile as sf
 import numpy as np
 import yaml
+import datetime
 
 from Utils.Utils import Stimuli_calculator, get_files, get_list_widget_items, load_yaml, get_param_val, get_param_label
 
@@ -101,11 +102,11 @@ class App_layout():
 
         # Available yml files
         self.grid.addWidget(self.params_files_label, 0, 0)
-        self.grid.addWidget(self.param_files_list, 1, 0, 3, 5)
+        self.grid.addWidget(self.param_files_list, 1, 0, 3, 4)
 
         # Available wav files
         self.grid.addWidget(self.audio_files_label, 4, 0)
-        self.grid.addWidget(self.audio_files_list, 5, 0, 3, 5)
+        self.grid.addWidget(self.audio_files_list, 5, 0, 3, 4)
 
         # Loaded stims
         self.grid.addWidget(self.laoded_stims_label, 8, 0)
@@ -115,7 +116,6 @@ class App_layout():
         self.grid.addWidget(self.filename_edit, 0, 2, 1, 2)
 
         for i in range(10):
-
             # Create empty parameter fields
             lbl = QLabel('Empty param')
             lbl.setObjectName('ParamName')
@@ -156,7 +156,7 @@ class App_layout():
 
         # Finalise layout
         self.setLayout(self.grid)
-        self.setContentsMargins(50, 10, 10, 25)
+        self.setContentsMargins(5, 10, 10, 5)
         self.setGeometry(int(self.settings['position'].split(', ')[0]), int(self.settings['position'].split(', ')[1]),
                             int(self.settings['width']), int(self.settings['height']))
         self.setWindowTitle('Review')
@@ -494,6 +494,21 @@ class App_control():
         # Update files list widget
         App_control.get_stims_yaml_files_from_folder(main)
 
+
+    # stimuli LOG
+    @staticmethod
+    def create_stim_log(main):
+        main.stim_log_path = os.path.join(main.settings['log_folder'], main.settings['log_session_name'], "visual_stimuli_log.yml")
+        now = datetime.datetime.now()
+        to_write = "Session: {} -- start: {}".format(main.settings['log_session_name'], now.strftime("%Y-%m-%d %H:%M"))
+        
+        with open(main.stim_log_path, 'w') as outfile:
+            yaml.dump(to_write, outfile, default_flow_style=True)
+            yaml.dump("------------------------------------------", outfile, default_flow_style=True)
+            yaml.dump("------------------------------------------", outfile, default_flow_style=True)
+
+
+
     # LAUNCH btn function
     @staticmethod
     def launch_stim(main):
@@ -521,8 +536,21 @@ class App_control():
                 else:
                     duration_ms = get_wav_duration(main.prepared_stimuli[selected_stim])
                     params = dict(type='audio', duration=duration_ms)
-                    calcuated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)
-                    main.stim_frames = calcuated_stim.stim_frames
+                    calculated_stim = Stimuli_calculator(main.psypy_window, params, main.screenMs)
+                    main.stim_frames = calculated_stim.stim_frames
+
+                params['stim_count'] = main.stim_count
+                params['stim_name'] = selected_stim
+                now = datetime.datetime.now()
+                params['stim_start'] = now.strftime("%H:%M")
+
+
+                with open(main.stim_log_path, 'a') as outfile:
+                    yaml.dump({"Stim {}".format(main.stim_count):params}, outfile, default_flow_style=False)
+
+                main.stim_count += 1
+
+
 
     @staticmethod
     def launch_all_stims(main):

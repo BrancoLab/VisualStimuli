@@ -72,6 +72,10 @@ class Main_UI(QWidget):
         # Load Audio WAV files
         App_control.get_audio_files_from_folder(self)
 
+        # Create stimuli log
+        App_control.create_stim_log(self)
+        self.stim_count = 0   # to keep track of stimuli in log
+
     def initialise_variables(self):
         # initialise user name
         self.user = self.settings['user_name']
