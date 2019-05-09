@@ -3,3 +3,5 @@
 *.pyc
 *.iml
 *.iml
+
+GUI_cfg.yml
