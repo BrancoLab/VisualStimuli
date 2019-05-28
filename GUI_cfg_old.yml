@@ -1,0 +1,33 @@
+# USER NAME
+user_name: 'Sarah'
+
+# DEFINE THE MONITOR
+Name: 'Projector_LG'  # Name of the yml file with the specs of the monitor being used
+Volume: 1   # volume of audio stims  (between  0 and 1)
+
+# Define parameters of the GUI window
+position: 50, 50 # Position of top left corner on main screen, in px
+width: 1000       # Width of the window in px
+height: 1200       # Height of the window in px
+
+# DEFINE PSYCHOPY WINDOW
+wnd_PxSize: 1920, 2000 # Size of the window in px
+fullscreen: true      # Full-screen mode
+unit: 'cm'             # Default unit of measurement for stims
+default_bg: 60      # Default background color
+
+# DEFINE LDR SQUARE [white/black square above a Light Dependant Resistor to get loom onset times]
+square on: true           # using the square or not
+square pos: 'top left'    # Location of the square relative to the screen
+square width: 7          # Square side length in cm
+square default col: 255  # default color [when the stimulus is off], when stim is on the color is inverted
+
+# DEFINE PATHS
+stim_configs: '.\Visual_stimuli'
+audio_files: '.\Audio_files'
+
+# DEFINE ARDUINO COMMUNICATION
+use_arduino: True
+arduino_slave_mode: True   # in slave mode the gui waits for a command from arduino, otherwise it will send commands TO the arduino
+arduino_comm : 'COM8'
+arduino_command: 'p'
