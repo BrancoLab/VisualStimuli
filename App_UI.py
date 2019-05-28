@@ -6,7 +6,7 @@ import soundfile as sf
 import numpy as np
 import yaml
 import datetime
-
+import warnings
 from Utils.Utils import Stimuli_calculator, get_files, get_list_widget_items, load_yaml, get_param_val, get_param_label
 
 ####################################################################################################################
@@ -499,7 +499,12 @@ class App_control():
     @staticmethod
     def create_stim_log(main):
         main.stim_log_path = os.path.join(main.settings['log_folder'], main.settings['log_session_name'], "visual_stimuli_log.yml")
-        now = datetime.datetime.now()
+
+        if not os.path.isdir( os.path.join(main.settings['log_folder'], main.settings['log_session_name'])):
+            raise FileNotFoundError("Could not create LOG FILE")
+
+        if os.path.isfile(main.stim_log_path):
+            raise FileExistsError("cant overwrite stuff")
 
 
 
