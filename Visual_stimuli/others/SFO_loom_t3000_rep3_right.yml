@@ -1,0 +1,3 @@
+{Stim type: loom, color: '0', end_size: '15', expand_time: '1000', modality: linear,
+  off_time: '250', on_time: '250', pos: '-450, -0', repeats: '3', start_size: '1.5',
+  type: loom, units: deg}

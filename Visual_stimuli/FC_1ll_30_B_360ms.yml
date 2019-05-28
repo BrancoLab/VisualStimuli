@@ -1,0 +1,14 @@
+{
+  Stim type: loom, 
+  color: '0', 
+  end_size: '15',    # end size refers to the radius in degrees of visual field of mouse, so the total width will be 30
+  expand_time: '360', 
+  modality: linear,
+  off_time: '250', 
+  on_time: '240', 
+  pos: '480, 75', 
+  repeats: '1', 
+  start_size: '0.5', 
+  type: loom,
+  units: degs
+  }

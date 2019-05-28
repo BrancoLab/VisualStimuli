@@ -72,6 +72,10 @@ class Main_UI(QWidget):
         # Load Audio WAV files
         App_control.get_audio_files_from_folder(self)
 
+        # Create stimuli log
+        App_control.create_stim_log(self)
+        self.stim_count = 0   # to keep track of stimuli in log
+
     def initialise_variables(self):
         # initialise user name
         self.user = self.settings['user_name']
@@ -425,17 +429,17 @@ class Main_UI(QWidget):
 
                     # Keep track of stim lifespan
                     elapsed = time.clock() - self.stim_timer
-                    print('     ... stim duration: {}'.format(elapsed * 1000))
+                    print('     ... stim duration: {}'.format(round(elapsed * 1000),2))
 
                     # Keep track of time it took to update (draw) each frame
                     self.draws = np.array(self.psypy_window.frameIntervals)
-                    print('     ... number of exp frames {}, number of intervals {}'.format(self.stim_frame_number,
+                    print('     ... number of exp frames {}, number of intervals {}'.format(round(self.stim_frame_number,2),
                                                                                     len(self.psypy_window.frameIntervals)))
                     self.psypy_window.frameIntervals = []
                     self.psypy_window.recordFrameIntervals = False
 
                     all_draws, avg_draw, std_draw = self.draws.copy(), np.mean(self.draws), np.std(self.draws)
-                    print('     ... avg time between draws: {}, std {}'.format(avg_draw*1000, std_draw))
+                    print('     ... avg time between draws: {}, std {}'.format(round(avg_draw*1000,2), round(std_draw,1)))
                     self.draws = []
 
                     if self.benchmarking:
