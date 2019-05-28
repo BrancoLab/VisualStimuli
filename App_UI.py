@@ -500,12 +500,6 @@ class App_control():
     def create_stim_log(main):
         main.stim_log_path = os.path.join(main.settings['log_folder'], main.settings['log_session_name'], "visual_stimuli_log.yml")
         now = datetime.datetime.now()
-        to_write = "Session: {} -- start: {}".format(main.settings['log_session_name'], now.strftime("%Y-%m-%d %H:%M"))
-        
-        with open(main.stim_log_path, 'w') as outfile:
-            yaml.dump(to_write, outfile, default_flow_style=True)
-            yaml.dump("------------------------------------------", outfile, default_flow_style=True)
-            yaml.dump("------------------------------------------", outfile, default_flow_style=True)
 
 
 

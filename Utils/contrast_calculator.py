@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import math
 
+import sys
+sys.path.append("./")
 
 """
     A few utils functions to calculate the luminance in Lux given a specific setting for the background in the GUI and
@@ -83,9 +85,9 @@ if __name__ == "__main__":
     c = Calculator()
 
     # c.plot("Lux")
-    # c.plot("LDR readout - Python")
+    c.plot("LDR readout - Python")
 
-    c.contrast_calc(125, 10)
+    # c.contrast_calc(125, 10)
 
     # c.loom_angle_calculator(90, 170)
 
