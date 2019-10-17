@@ -431,7 +431,7 @@ class Worker(QRunnable):
 def load_yaml(fpath):
     # Load data from a YAML file
     with open(fpath, 'r') as f:
-        settings = yaml.load(f)
+        settings = yaml.load(f, Loader=yaml.FullLoader)
     return settings
 
 
@@ -501,11 +501,13 @@ def get_list_widget_items(list_wdg):
 def monitor_def(settings):
     print('Setting up monitor {}'.format(settings['Name']))
     filename =settings['Name']
+    setupfile = None
     for f in os.listdir(".\\Screens"):
         if filename == f.split('.')[0]:
             setupfile = f
             break
-
+    if setupfile is None: raise FileNotFoundError("Could not find monitor file with name matching: {}".format(settings['Name']))
+    
     screen_params = load_yaml(".\\Screens\\{}".format(setupfile))
 
     my_monitor = monitors.Monitor(screen_params['Name'])

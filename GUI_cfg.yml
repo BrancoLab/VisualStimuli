@@ -1,8 +1,8 @@
 # USER NAME
-user_name: 'Sarah'
+user_name: 'Max'
 
 # DEFINE THE MONITOR
-Name: 'Projector_LG'  # Name of the yml file with the specs of the monitor being used
+Name: 'spiderscreen'  # Name of the yml file with the specs of the monitor being used
 Volume: 1   # volume of audio stims  (between  0 and 1)
 
 # Define parameters of the GUI window
@@ -11,7 +11,7 @@ width: 1000       # Width of the window in px
 height: 1200       # Height of the window in px
 
 # DEFINE PSYCHOPY WINDOW
-wnd_PxSize: 1920, 2000 # Size of the window in px
+wnd_PxSize: 7680, 1080 # Size of the window in px
 fullscreen: true      # Full-screen mode
 unit: 'cm'             # Default unit of measurement for stims
 default_bg: 60      # Default background color
@@ -27,7 +27,7 @@ stim_configs: '.\Visual_stimuli'
 audio_files: '.\Audio_files'
 
 # DEFINE ARDUINO COMMUNICATION
-use_arduino: true
+use_arduino: false
 arduino_slave_mode: true   # in slave mode the gui waits for a command from arduino, otherwise it will send commands TO the arduino
 arduino_comm : 'COM8'
 arduino_command: 'p'
@@ -35,6 +35,6 @@ arduino_command: 'p'
 
 # STIMULI LOG
 # Save as a .yml file all the stimuli presented during a session (including params)
-log_folder: "I:\\VP"  # main folder
+log_folder: "Y:\\swc\\branco\\007Max"  # main folder
 log_session_name: "test"   # each mouses subfolder
 

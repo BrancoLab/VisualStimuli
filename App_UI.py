@@ -501,7 +501,7 @@ class App_control():
         main.stim_log_path = os.path.join(main.settings['log_folder'], main.settings['log_session_name'], "visual_stimuli_log.yml")
 
         if not os.path.isdir( os.path.join(main.settings['log_folder'], main.settings['log_session_name'])):
-            raise FileNotFoundError("Could not create LOG FILE")
+            os.mkdir(os.path.join(main.settings['log_folder'], main.settings['log_session_name']))
 
         if os.path.isfile(main.stim_log_path):
             raise FileExistsError("cant overwrite stuff")

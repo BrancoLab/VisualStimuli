@@ -1,0 +1,5 @@
+{Contrast: 'True', Contrast_lims: 200 - 255, Direction: 'True', Direction_lims: -1
+    - 1, Empty param: Empty edit, Orientation: default, Orientation_lims: 0 - 45,
+  Stim type: fearcond_copmlex, Velocity: '2', audiostim: .\Audio_files\3x3s.wav, blackout: 4,
+  flash_screen: true, flash_screen_period: 0.5, grating: 30, overlap: 1, period: '5',
+  spatial frequency: '0.25', type: fearcond_copmlex, ultrasound: 9, units: deg}
