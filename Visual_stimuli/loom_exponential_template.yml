@@ -1,6 +1,10 @@
 type: loom               # type of stimulus
 modality: exponential    # loom expansion mode
 
+color: '0'
+repeats: '5'
+off_time: '500'
+
 start_size: 10     # start size
 LV speed: 490       # LV speed determines how fast the loom expands
 max radius: 20      # The loom will stop expanding at this radius

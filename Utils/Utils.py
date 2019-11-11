@@ -80,7 +80,7 @@ class Stimuli_calculator():
             radii = np.append(radii, on_radii)
 
             # Repeat the stimulus N times
-            if int(params['repeats']) > 0:
+            if int(params['repeats']) > 1:
                 # Add  inter stimuli interval
                 isi = int(params['off_time'])
                 if isi > 0:
@@ -117,8 +117,22 @@ class Stimuli_calculator():
             # Cut of radii that exceed user selected value
             radii[np.where(radii>int(params['max radius']))] = int(params['max radius'])
 
-            # TODO find a way to make the loom last a pre-determined ammount of time
+            # keep the radius constant during on time
+            numOnSteps = int(np.round(int(params['on_time']) / screenMs))
+            on_radii = np.repeat(radii[-1], numOnSteps)
 
+            # put everything together
+            radii = np.append(radii, on_radii)
+
+            # Repeat the stimulus N times
+            if int(params['repeats']) > 1:
+                # Add  inter stimuli interval
+                isi = int(params['off_time'])
+                if isi > 0:
+                    numOffSteps = int(np.round(isi / screenMs))
+                    off_radii = np.zeros(numOffSteps)
+                    radii = np.append(radii, off_radii)
+                radii = np.tile(radii, int(params['repeats']))
         else:
             raise Warning('Couldnt compute loom parameters')
 

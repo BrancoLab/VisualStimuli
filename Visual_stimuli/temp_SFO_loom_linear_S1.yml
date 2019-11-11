@@ -1,0 +1,4 @@
+{Stim type: loom, color: '0', end_size: '30', expand_time: '360', modality: linear,
+  off_time: '500', on_time: '250', pos: '-1920, 50', repeats: '5', start_size: '2.5',
+  stim_count: '9', stim_name: SFO_loom_linear_S1.yml, stim_start: '11:14', type: loom,
+  units: deg}
