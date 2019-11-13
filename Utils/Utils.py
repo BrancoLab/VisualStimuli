@@ -157,6 +157,10 @@ class Stimuli_calculator():
             pos = unit_converter(wnd, pos[0], in_unit='px', out_unit=unit), unit_converter(wnd, pos[1], in_unit='px', out_unit=unit)
             positions.append(pos)
         positions = tuple(positions)
+
+        # If there are no repeats, the off time must be zero otherwise the LDR stays on too long
+        if int(params['repeats']) <= 1:
+            params['off_time'] = '0'
  
         # get total duration of the stimulus in number of frames [for different elements of the stimulus]
         if params['modality'].lower() == 'linear':
@@ -170,8 +174,6 @@ class Stimuli_calculator():
             tot_duration = int(params['duration']) + expansion_duration + int(params['on_time']) + int(params['off_time'])
             loom_expansion_steps = len(radii)
             params['start_size'] = original_start_size #  go back to original radius
-
-
 
         tot_steps = int(np.round(tot_duration / screenMs))
         spot_steps = int(np.round(int(params['duration']) / screenMs))

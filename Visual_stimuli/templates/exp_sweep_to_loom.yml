@@ -1,3 +1,15 @@
-{Empty param: Empty edit, Stim type: spot_loom, duration: '1000', end_pos: '200, 50', off_time: '500',
-   initial_pos: '-500, 50', modality: exponential, on_time: '500', LV speed: '100', max radius: '30',
-  repeats: '5', start_size: '3', type: spot_loom, units: deg}
+{
+  Stim type: spot_loom, 
+  duration: '1000',  # duration of the sweep
+  end_pos: '200, 50', # final position of the spot
+  off_time: '500', # off time between repeats
+  initial_pos: '-500, 50',  # initial position of the spot relative to center of window
+  modality: exponential, # exponential vs linear
+  on_time: '500', # how how long the stim is on after expansion
+  LV speed: '100',  # exponential expansion speed
+  max radius: '30', # max loom radius
+  repeats: '5',  # number if stim repeats
+  start_size: '3',  # initial size
+
+  type: spot_loom, 
+  units: deg}

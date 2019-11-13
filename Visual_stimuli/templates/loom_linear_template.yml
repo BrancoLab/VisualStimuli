@@ -1,6 +1,6 @@
 {
-  Stim type: loom, 
-  color: '0', 
+  Stim type: loom,   # stim type
+  color: '0', # color of the loom, 0 is black
   end_size: '5', 
   expand_time: '500', 
   modality: linear,

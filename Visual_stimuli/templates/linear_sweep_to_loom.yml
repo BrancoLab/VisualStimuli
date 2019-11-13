@@ -1,4 +1,0 @@
-{Stim type: spot_loom, duration: '1000', end_pos: '2000, 50', end_size: '50', expand_time: '380',
-  initial_pos: '1920, 50', modality: linear, on_time: '500', repeats: '5', size: '3', off_time: '500',
-  stim_count: '2', stim_name: Spider_sweep_to_loom_S4.yml, stim_start: '17:05', type: spot_loom,
-  units: deg}
