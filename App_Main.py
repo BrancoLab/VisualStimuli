@@ -90,7 +90,7 @@ class Main_UI(QWidget):
         self.playing_stim_num = 0
 
         # Stim parameters that should not be desplayed in the GUI [by name]
-        self.ignored_params = ['name', 'units', 'type', 'modality', 'Stim type']
+        self.ignored_params = ['Empty param', 'name', 'units', 'type', 'modality', 'Stim type', 'stim_start', 'stim_name', 'stim_count']
 
         # Flags to handle stim generation
         """

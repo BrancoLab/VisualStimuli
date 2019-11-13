@@ -1,0 +1,4 @@
+{Empty param: Empty edit, LV speed: '100', Stim type: spot_loom, duration: '1000',
+  end_pos: '200, 50', initial_pos: '-500, 50', max radius: '15', modality: exponential,
+  off_time: '500', on_time: '500', repeats: '2', start_size: '3', type: spot_loom,
+  units: deg}

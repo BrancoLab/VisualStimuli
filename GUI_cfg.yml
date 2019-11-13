@@ -2,17 +2,17 @@
 user_name: 'Max'
 
 # DEFINE THE MONITOR
-Name: 'spiderscreen'  # Name of the yml file with the specs of the monitor being used
+Name: 'Dell_P2715Q'   # 'spiderscreen'  # Name of the yml file with the specs of the monitor being used
 Volume: 1   # volume of audio stims  (between  0 and 1)
 
 # Define parameters of the GUI window
-position: 50, 50 # Position of top left corner on main screen, in px
+position: 50, 50  # 50, 50 # Position of top left corner on main screen, in px
 width: 1000       # Width of the window in px
 height: 1200       # Height of the window in px
 
 # DEFINE PSYCHOPY WINDOW
-wnd_PxSize: 7680, 1080 # Size of the window in px
-fullscreen: true      # Full-screen mode
+wnd_PxSize: 2000, 2000    # 7680, 1080 # Size of the window in px
+fullscreen: false      # Full-screen mode
 unit: 'cm'             # Default unit of measurement for stims
 default_bg: 255      # Default background color
 
@@ -35,6 +35,6 @@ arduino_command: 'p'
 
 # STIMULI LOG
 # Save as a .yml file all the stimuli presented during a session (including params)
-log_folder: "H:\\Max_spider_exp\\def_behav_probe"  # main folder
-log_session_name: "13_11_19_sp1vghcgh_stimuli"   # each mouses subfolder
+log_folder: 'K:\'  # "H:\\Max_spider_exp\\def_behav_probe"  # main folder
+log_session_name: "test28"   # each mouses subfolder
 

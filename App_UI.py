@@ -351,7 +351,7 @@ class App_control():
             params_names = sorted(params.keys())
             params_names = [x for x in params_names if x not in main.ignored_params]  # Don't display all parameters
             assigned = 0  # Keep track of how many parameters have been assigned to a widget
-            ignore_params = ['audiostim', 'blackout', 'grating', 'ultrasound', 'overlap']
+            ignore_params = ['audiostim', 'blackout','Empty param', 'grating', 'ultrasound', 'overlap', 'stim_start', 'stim_count']
 
             for pnum in sorted(main.params_widgets_dict.keys()):
                 if 'Param' in pnum:

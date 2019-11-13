@@ -47,6 +47,44 @@ class Stimuli_calculator():
         elif 'spot_loom' == params['type'].lower():
             self.stim_frames = self.spot_to_loomer(wnd, params, screenMs)
 
+    def exponential_loom_calculator(self, params, wnd, screenMs):
+        # Get the parameters to calculate the loom expansion steps
+        speed = int(params['LV speed'])/1000
+        if params['units'] == 'degs' or params['units'] == 'deg':
+            tangent = math.tan(math.radians(float(params['start_size'])/2))
+        elif params['units'] == 'cm':
+            size = unit_converter(wnd, float(params['start_size']), in_unit='cm', out_unit='deg')
+            tangent = math.degrees(math.tan(float(size)))
+        mouse_distance = wnd.monitor.getDistance()  # distance of mouse from screen in cm
+
+        # Calc expansions steps  [based on Matlab code for exponential looms]
+        time_to_collision = round(float(100*speed/tangent),2)/100 # time to collision IN SECONDS
+        num_steps = np.ceil(time_to_collision/(1/60))
+        time_array = np.linspace(-time_to_collision, 0, num_steps)
+
+        conv_factor = speed/abs(time_array[0:-1])
+        radii = conv_factor * mouse_distance  # Radii in cm
+
+        # Convert the radii in degres if the stim is being defined in degrees
+        if params['units']  == 'deg' or params['units'] == 'degs':
+            converted_radii = []
+            for rad in radii:
+                converted_radii.append(unit_converter(wnd, rad, in_unit='cm', out_unit='deg'))
+            radii = np.array(converted_radii)
+
+        # Cut of radii that exceed user selected value
+        radii[np.where(radii>int(params['max radius']))] = int(params['max radius'])
+
+        # keep the radius constant during on time
+        numOnSteps = int(np.round(int(params['on_time']) / screenMs))
+        on_radii = np.repeat(radii[-1], numOnSteps)
+
+        # put everything together
+        radii = np.append(radii, on_radii)
+
+        return radii
+
+
     def loomer(self, wnd, params, screenMs):
         """
         Calculates the position of the loom, for how many screen frames it will stay on and what the radius will be
@@ -90,39 +128,7 @@ class Stimuli_calculator():
                 radii = np.tile(radii, int(params['repeats']))
 
         elif params['modality'] == 'exponential':
-            # Get the parameters to calculate the loom expansion steps
-            speed = int(params['LV speed'])/1000
-            if params['units'] == 'degs' or params['units'] == 'deg':
-                tangent = math.tan(math.radians(float(params['start_size'])/2))
-            elif params['units'] == 'cm':
-                size = unit_converter(wnd, float(params['start_size']), in_unit='cm', out_unit='deg')
-                tangent = math.degrees(math.tan(float(size)))
-            mouse_distance = wnd.monitor.getDistance()  # distance of mouse from screen in cm
-
-            # Calc expansions steps  [based on Matlab code for exponential looms]
-            time_to_collision = round(float(100*speed/tangent),2)/100 # time to collision IN SECONDS
-            num_steps = np.ceil(time_to_collision/(1/60))
-            time_array = np.linspace(-time_to_collision, 0, num_steps)
-
-            conv_factor = speed/abs(time_array[0:-1])
-            radii = conv_factor * mouse_distance  # Radii in cm
-
-            # Convert the radii in degres if the stim is being defined in degrees
-            if params['units']  == 'deg' or params['units'] == 'degs':
-                converted_radii = []
-                for rad in radii:
-                    converted_radii.append(unit_converter(wnd, rad, in_unit='cm', out_unit='deg'))
-                radii = np.array(converted_radii)
-
-            # Cut of radii that exceed user selected value
-            radii[np.where(radii>int(params['max radius']))] = int(params['max radius'])
-
-            # keep the radius constant during on time
-            numOnSteps = int(np.round(int(params['on_time']) / screenMs))
-            on_radii = np.repeat(radii[-1], numOnSteps)
-
-            # put everything together
-            radii = np.append(radii, on_radii)
+            radii = self.exponential_loom_calculator(params, wnd, screenMs)
 
             # Repeat the stimulus N times
             if int(params['repeats']) > 1:
@@ -152,11 +158,24 @@ class Stimuli_calculator():
             positions.append(pos)
         positions = tuple(positions)
  
-        # get total duration of the stimulus in number of frames
-        tot_duration = int(params['duration']) + int(params['expand_time']) + int(params['on_time'])
+        # get total duration of the stimulus in number of frames [for different elements of the stimulus]
+        if params['modality'].lower() == 'linear':
+            tot_duration = int(params['duration']) + int(params['expand_time']) + int(params['on_time']) + int(params['off_time'])
+            loom_expansion_steps = int(np.round(int(params['expand_time']) / screenMs))
+        else:
+            original_start_size = params['start_size']
+            params['start_size'] = str(2*int(params['start_size'])) #  need to double it because it's halfed in the exponential_loom_calculator
+            radii = self.exponential_loom_calculator(params, wnd, screenMs) # stores the radius of the spot during exponential expansion
+            expansion_duration = int(np.round(len(radii) * screenMs)) # expansion duration in ms
+            tot_duration = int(params['duration']) + expansion_duration + int(params['on_time']) + int(params['off_time'])
+            loom_expansion_steps = len(radii)
+            params['start_size'] = original_start_size #  go back to original radius
+
+
+
         tot_steps = int(np.round(tot_duration / screenMs))
         spot_steps = int(np.round(int(params['duration']) / screenMs))
-        loom_expansion_steps = int(np.round(int(params['expand_time']) / screenMs))
+        loom_on_steps = int(np.round(int(params['on_time']) / screenMs))
 
         frames = np.zeros((3, tot_steps))   # 2d array with x,y position and size of the circle at each frame -> to be filled in
 
@@ -171,9 +190,21 @@ class Stimuli_calculator():
         frames[1, spot_steps:] = positions[1][1]  
 
         # define the size at each frame
-        frames[2, :spot_steps] = int(params['size']) # constant
-        frames[2, spot_steps:spot_steps+loom_expansion_steps] = np.linspace(int(params['size']), int(params['end_size']), loom_expansion_steps) # expands
-        frames[1, spot_steps+loom_expansion_steps:] =  int(params['end_size']) # constant
+        if params['modality'].lower() == 'linear':
+            frames[2, :spot_steps] = int(params['size']) # constant during expansion
+            frames[2, spot_steps:spot_steps+loom_expansion_steps] = np.linspace(int(params['size']), int(params['end_size']), loom_expansion_steps) # expands
+        elif params['modality'].lower() == 'exponential':
+            frames[2, :spot_steps] = int(params['start_size']) # constant during expansion
+            frames[2, spot_steps:spot_steps+loom_expansion_steps] = radii
+            params['end_size'] = radii[-1]
+        else:
+            raise ValueError("Parameter not valid (modality: {})".format(params['modality']))
+        frames[2, spot_steps+loom_expansion_steps:spot_steps+loom_expansion_steps+loom_on_steps] =  int(params['end_size']) # constant during ON
+        frames[2, spot_steps+loom_expansion_steps+loom_on_steps:] =  0 # no radius during OFF
+
+        # repeat the stimulus N times
+        if int(params['repeats']) > 1:
+            frames = np.tile(frames, (1, int(params['repeats'])))
 
         return frames
 

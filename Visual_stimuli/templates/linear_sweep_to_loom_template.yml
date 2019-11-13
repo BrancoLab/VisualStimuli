@@ -1,0 +1,4 @@
+{Empty param: Empty edit, Stim type: spot_loom, duration: '1000', end_pos: '200, 50', off_time: '500',
+  end_size: '10', expand_time: '380', initial_pos: '-500, 50', modality: linear, on_time: '500',
+  repeats: '5', size: '3', stim_count: 3, stim_name: fede_linear_sweep_to_loom.yml, 
+  stim_start: '15:08', type: spot_loom, units: deg}
