@@ -1,0 +1,6 @@
+# DEFINE THE MONITOR
+Name: 'Spiderscreen'  # Name of the monitor
+PxSize: 7680, 1080    # Size of the monitor in pixel
+Width: 96            # Width of the monitor in cm
+Distance: 11         # Distance from the mouse
+Screen number: 1      # Screen number on your coputer

@@ -1,3 +1,0 @@
-{Stim type: spot_loom, duration: '5000', end_pos: '-500, 0', end_size: '15', expand_time: '380',
-  initial_pos: '1000, -0', modality: linear, on_time: '250', repeats: '1', size: '3',
-  type: spot_loom, units: deg}
