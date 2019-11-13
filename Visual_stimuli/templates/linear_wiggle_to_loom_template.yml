@@ -1,0 +1,16 @@
+{
+  Stim type: wiggle_loom, 
+  duration: '1000',   # duration of wiggle
+  off_time: '500', # off time between repeats
+  end_size: '10',  # final size of the spot
+  expand_time: '380',  # duration of loom expansion
+  initial_pos: '0, 0',  # initial position of the spot relative to center of window
+  wiggle_range: '250, 250', # wiggle on the X and Y axes
+  wiggle_frequency: '0.5', # number of wiggles per second  modality: linear, 
+  on_time: '500', # time the stim stays on between stimuli
+  repeats: '5',  # number of repetition
+  size: '3', # initial size
+  modality: linear, # exponential vs linear
+
+  type: wiggle_loom, 
+  units: deg}

@@ -14,6 +14,8 @@ from App_UI import App_layout, App_control
 
 
 class Main_UI(QWidget):
+    n_params_widgets = 12
+
     def __init__(self):
         """
         Initialise variables to control GUI behaviour
@@ -273,7 +275,7 @@ class Main_UI(QWidget):
                 self.stim.radius = radii[self.stim_frame_number]
 
             # Create SPOT to LOOM
-            if 'spot_loom' == params['type'].lower():
+            if 'spot_loom' == params['type'].lower() or 'wiggle_loom' == params['type'].lower():
                 if self.stim is None:
                     self.stim_timer = time.clock()  # Time lifespan of the stim
                     self.stim = visual.Circle(self.psypy_window, radius=float(frames[2, 0]), edges=64,

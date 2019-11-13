@@ -44,8 +44,10 @@ class Stimuli_calculator():
             # Define which aspects of the
             self.stim_frames = self.complex_fearcon_stim(wnd, params, screenMs, blackout=True, grating=True,
                                                             ultrasound=True, overlap=True)
-        elif 'spot_loom' == params['type'].lower():
+        elif 'spot_loom' == params['type'].lower() or 'wiggle_loom' == params['type'].lower():
             self.stim_frames = self.spot_to_loomer(wnd, params, screenMs)
+        else:
+            raise ValueError("Unrecognized stim type: {}".format(params['type']))
 
     def exponential_loom_calculator(self, params, wnd, screenMs):
         # Get the parameters to calculate the loom expansion steps
@@ -148,16 +150,8 @@ class Stimuli_calculator():
         """
             This function calculates the frames for a spot to loom stimulus in which a spot appears on the screen, moves towards the center and turns into a loom.
             In practice this is just a psychopy circle whose position and size changes over the course of the stimulus.
+            It also handles the wiggle to loom stimulus
         """
-        # Convert spot start and end positions from user defined pixel values to cm
-        positions = []
-        for param_name in ['initial_pos', 'end_pos']:
-            pos = int(params[param_name].split(', ')[0]), int(params[param_name].split(', ')[1])
-            unit = params['units']
-            pos = unit_converter(wnd, pos[0], in_unit='px', out_unit=unit), unit_converter(wnd, pos[1], in_unit='px', out_unit=unit)
-            positions.append(pos)
-        positions = tuple(positions)
-
         # If there are no repeats, the off time must be zero otherwise the LDR stays on too long
         if int(params['repeats']) <= 1:
             params['off_time'] = '0'
@@ -182,9 +176,50 @@ class Stimuli_calculator():
         frames = np.zeros((3, tot_steps))   # 2d array with x,y position and size of the circle at each frame -> to be filled in
 
         # define position of circle at all frames
-        x_spot_position = np.linspace(positions[0][0], positions[1][0], spot_steps)
-        y_spot_position = np.linspace(positions[0][1], positions[1][1], spot_steps)
+        if 'spot_loom' == params['type'].lower():
+            # Convert spot start and end positions from user defined pixel values to cm
+            positions = []
+            for param_name in ['initial_pos', 'end_pos']:
+                pos = int(params[param_name].split(', ')[0]), int(params[param_name].split(', ')[1])
+                unit = params['units']
+                pos = unit_converter(wnd, pos[0], in_unit='px', out_unit=unit), unit_converter(wnd, pos[1], in_unit='px', out_unit=unit)
+                positions.append(pos)
+            positions = tuple(positions)            
+            x_spot_position = np.linspace(positions[0][0], positions[1][0], spot_steps)
+            y_spot_position = np.linspace(positions[0][1], positions[1][1], spot_steps)
+        else:
+            # it's a wiggle loom, compute the wiggle
+            # Convert spot start and end positions from user defined pixel values to cm
+            pos = int(params['initial_pos'].split(', ')[0]), int(params['initial_pos'].split(', ')[1])
+            unit = params['units']
+            p_start = unit_converter(wnd, pos[0], in_unit='px', out_unit=unit), unit_converter(wnd, pos[1], in_unit='px', out_unit=unit)
+            
+            # get the position at the extremes of the oscillation
+            wiggle = int(params['wiggle_range'].split(', ')[0]), int(params['wiggle_range'].split(', ')[1])
+            p0 = unit_converter(wnd, pos[0]-wiggle[0], in_unit='px', out_unit=unit), unit_converter(wnd, pos[1]-wiggle[1], in_unit='px', out_unit=unit)
+            p1 = unit_converter(wnd, pos[0]+wiggle[0], in_unit='px', out_unit=unit), unit_converter(wnd, pos[1]+wiggle[1], in_unit='px', out_unit=unit)
 
+            # Get the duration of one oscillation (in frames)
+            dur = int(1000/float(params['wiggle_frequency']) / screenMs)
+
+            if dur == 0: dur = 1
+
+            # get number of oscillations
+            n_oscill = np.int(np.ceil((spot_steps - int(dur/2))/dur)) # removing half duration because of the first movement
+
+            # move to p0
+            move_1 = [np.linspace(p_start[0], p0[0], int(dur/2)), np.linspace(p_start[1], p0[1], int(dur/2))]
+
+            # create a single oscillation
+            oscill_x = np.hstack([np.linspace(p0[0], p1[0], int(dur/2)), np.linspace(p1[0], p0[0], int(dur/2))])
+            oscill_y = np.hstack([np.linspace(p0[1], p1[1], int(dur/2)), np.linspace(p1[1], p0[1], int(dur/2))])
+
+            # put everything together
+            x_spot_position = np.hstack((move_1[0], np.tile(oscill_x, n_oscill)))[:spot_steps]
+            y_spot_position = np.hstack((move_1[1], np.tile(oscill_y, n_oscill)))[:spot_steps]
+
+            # store final positions
+            positions = [[], [x_spot_position[-1], y_spot_position[-1]]]
 
         frames[0, :spot_steps] = x_spot_position
         frames[0, spot_steps:] = positions[1][0]  # the spot remains in place when it turns into a loom
