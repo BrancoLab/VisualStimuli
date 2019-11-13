@@ -1,0 +1,4 @@
+{LV speed: '10', Stim type: loom, color: '0', max radius: '50', modality: exponential,
+  off_time: '500', on_time: '1000', pos: '960, 50', repeats: '5', start_size: '10',
+  stim_count: '14', stim_name: Spider_loom_exponential_S3.yml, stim_start: '13:45',
+  type: loom, units: deg}

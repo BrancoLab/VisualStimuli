@@ -1,0 +1,4 @@
+{Stim type: spot_loom, duration: '1000', end_pos: '960, 50', end_size: '50', expand_time: '380',
+  initial_pos: '0, 50', modality: linear, on_time: '500', repeats: '5', size: '3',
+  stim_count: '2', stim_name: SFO_sweep_to_loom.yml, stim_start: '16:22', type: spot_loom,
+  units: deg}

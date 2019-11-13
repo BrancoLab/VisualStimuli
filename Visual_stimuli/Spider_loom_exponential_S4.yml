@@ -1,0 +1,4 @@
+{LV speed: '10', Stim type: loom, color: '0', max radius: '50', modality: exponential,
+  off_time: '500', on_time: '1000', pos: '2880, 50', repeats: '5', start_size: '10',
+  stim_count: '14', stim_name: 00_loom_exponential.yml, stim_start: '10:57', type: loom,
+  units: deg}

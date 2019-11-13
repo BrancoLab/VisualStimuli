@@ -36,5 +36,5 @@ arduino_command: 'p'
 # STIMULI LOG
 # Save as a .yml file all the stimuli presented during a session (including params)
 log_folder: "H:\\Max_spider_exp\\def_behav_probe"  # main folder
-log_session_name: "testestest"   # each mouses subfolder
+log_session_name: "13_11_19_sp1vghcgh_stimuli"   # each mouses subfolder
 
